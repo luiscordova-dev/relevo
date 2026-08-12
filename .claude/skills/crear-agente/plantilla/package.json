@@ -1,0 +1,13 @@
+{
+  "name": "agente-whatsapp",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "publicar": "wrangler deploy",
+    "registros": "wrangler tail",
+    "base": "wrangler d1 execute DB --remote --file=schema.sql"
+  },
+  "devDependencies": {
+    "wrangler": "^4"
+  }
+}

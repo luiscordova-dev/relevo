@@ -1,0 +1,43 @@
+{
+  // La skill reemplaza NOMBRE-DEL-AGENTE y el id de la base al construirlo.
+  "name": "NOMBRE-DEL-AGENTE",
+  "main": "src/index.js",
+  "compatibility_date": "2026-08-01",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // El cerebro, el oído y la vista. Incluidos en el plan gratis de Cloudflare.
+  "ai": { "binding": "AI" },
+
+  // Donde viven tus interesados y las conversaciones.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "NOMBRE-DEL-AGENTE-db",
+      "database_id": "ID-DE-LA-BASE"
+    }
+  ],
+
+  // El reporte diario: 3:00 am hora de México (9:00 UTC).
+  "triggers": { "crons": ["0 9 * * *"] },
+
+  "vars": {
+    "ZONA_HORARIA": "America/Mexico_City",
+    "MODELO_CEREBRO": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+    "MODELO_OIDO": "@cf/openai/whisper-large-v3-turbo",
+    "MODELO_VISTA": "@cf/meta/llama-3.2-11b-vision-instruct"
+    // ZERNIO_ACCOUNT_ID lo agrega la skill: identifica TU número.
+    // No es secreto, pero sin él tu agente contestaría mensajes de otros números.
+  },
+
+  "observability": { "enabled": true }
+
+  // Secretos (se guardan con `wrangler secret put`, nunca en este archivo):
+  //   ZERNIO_API_KEY          — para leer y contestar WhatsApp
+  //   ZERNIO_WEBHOOK_SECRET   — para comprobar que los mensajes vienen de Zernio
+  //   TELEGRAM_BOT_TOKEN      — tu bot de avisos
+  //   TELEGRAM_CHAT_ID        — a quién le avisa (a ti)
+  //   CLAVE_PANEL             — la clave de tu panel de interesados
+  // Opcionales:
+  //   RESEND_API_KEY, CORREO_DUENO   — reporte diario por correo
+  //   OPENAI_API_KEY | ANTHROPIC_API_KEY, MODELO_PROPIO — tu propia IA
+}
