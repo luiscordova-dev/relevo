@@ -28,7 +28,7 @@ export async function atender(env, { mensaje, conversacion: conv }) {
   const registro = await obtenerConversacion(env, conv.id, telefono, nombreWa);
 
   // 1. Oído y Vista: lo que sea que haya mandado, vuélvelo texto.
-  const { texto, tipo } = await interpretarMensaje(env, mensaje);
+  const { texto, tipo } = await interpretarMensaje(env, mensaje, conv.id);
   if (tipo !== "texto") paso.transcripcion = texto;
 
   // 2. Guardar. Si ya estaba, es un reintento de Zernio: no contestar dos veces.
@@ -48,7 +48,7 @@ export async function atender(env, { mensaje, conversacion: conv }) {
   // 4. Pensar con el historial. Si el agente tiene herramientas conectadas, aquí
   //    puede pedir una, ver el resultado y recién entonces contestar.
   const previos = await historial(env, conv.id);
-  let crudo = await pensar(env, previos);
+  let crudo = await pensar(env, previos, { conversacionId: conv.id });
 
   if (hayHerramientas(env)) {
     const conversacionInterna = [...previos];
@@ -64,7 +64,7 @@ export async function atender(env, { mensaje, conversacion: conv }) {
 
       conversacionInterna.push({ role: "assistant", content: crudo });
       conversacionInterna.push(resultadoParaElCerebro(pedido.id, resultado));
-      crudo = await pensar(env, conversacionInterna);
+      crudo = await pensar(env, conversacionInterna, { conversacionId: conv.id });
     }
     // Si tras las vueltas permitidas sigue pidiendo herramientas, se corta:
     // el cliente lleva demasiado esperando y prefiere una respuesta honesta.

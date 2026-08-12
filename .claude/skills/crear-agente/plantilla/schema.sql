@@ -56,3 +56,29 @@ CREATE TABLE IF NOT EXISTS eventos (
   creado_en INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_eventos_fecha ON eventos (creado_en);
+
+-- Cuánto cuesta cada cosa que hace tu agente. Cloudflare cobra en "neurons" y su API
+-- los devuelve por llamada, así que esto NO es una estimación: es el número real.
+CREATE TABLE IF NOT EXISTS uso (
+  id              INTEGER PRIMARY KEY AUTOINCREMENT,
+  conversacion_id TEXT,
+  tipo            TEXT NOT NULL,      -- cerebro | oido | vista | calidad
+  modelo          TEXT NOT NULL,
+  tokens_entrada  INTEGER NOT NULL DEFAULT 0,
+  tokens_salida   INTEGER NOT NULL DEFAULT 0,
+  neurons         REAL    NOT NULL DEFAULT 0,
+  -- 1 = el número viene de la API. 0 = lo calculamos nosotros (llave propia de
+  -- OpenAI/Anthropic) y en el panel se muestra marcado como estimado.
+  exacto          INTEGER NOT NULL DEFAULT 1,
+  ms              INTEGER NOT NULL DEFAULT 0,
+  creado_en       INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_uso_fecha ON uso (creado_en);
+
+-- Los ajustes que el dueño cambia desde el panel. El Worker los lee en caliente:
+-- cambiar algo aquí NO obliga a volver a publicar.
+CREATE TABLE IF NOT EXISTS ajustes (
+  clave     TEXT PRIMARY KEY,
+  valor     TEXT,
+  guardado  INTEGER NOT NULL
+);

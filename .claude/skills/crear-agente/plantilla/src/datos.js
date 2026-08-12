@@ -3,6 +3,41 @@
 
 const ahora = () => Date.now();
 
+// Cloudflare cobra $0.011 por cada 1,000 neurons. De ahí sale el peso exacto.
+export const USD_POR_MIL_NEURONS = 0.011;
+export const aUSD = (neurons) => (neurons || 0) * USD_POR_MIL_NEURONS / 1000;
+
+/** Anota lo que costó una llamada al modelo. Nunca lanza: medir no puede tumbar nada. */
+export async function registrarUso(env, { conversacionId, tipo, modelo, uso, ms, exacto = true }) {
+  try {
+    await env.DB.prepare(
+      `INSERT INTO uso (conversacion_id, tipo, modelo, tokens_entrada, tokens_salida,
+                        neurons, exacto, ms, creado_en)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ).bind(
+      conversacionId || null, tipo, modelo,
+      uso?.prompt_tokens || 0, uso?.completion_tokens || 0,
+      uso?.neurons || 0, exacto ? 1 : 0, ms || 0, ahora()
+    ).run();
+  } catch { /* medir es secundario: si falla, el agente sigue */ }
+}
+
+/** Lo gastado en una ventana de tiempo, desglosado. */
+export async function gasto(env, desde) {
+  const { results } = await env.DB.prepare(`
+    SELECT tipo, modelo, COUNT(*) AS llamadas,
+           SUM(tokens_entrada) AS entrada, SUM(tokens_salida) AS salida,
+           SUM(neurons) AS neurons, MIN(exacto) AS exacto, AVG(ms) AS ms_promedio
+      FROM uso WHERE creado_en >= ? GROUP BY tipo, modelo
+     ORDER BY neurons DESC`).bind(desde).all();
+  const filas = results || [];
+  const neurons = filas.reduce((t, f) => t + (f.neurons || 0), 0);
+  return {
+    filas, neurons, usd: aUSD(neurons),
+    exacto: filas.every((f) => f.exacto === 1),
+  };
+}
+
 export async function registrarEvento(env, tipo, detalle) {
   await env.DB.prepare("INSERT INTO eventos (tipo, detalle, creado_en) VALUES (?, ?, ?)")
     .bind(tipo, typeof detalle === "string" ? detalle : JSON.stringify(detalle ?? null), ahora())
@@ -187,6 +222,23 @@ export async function cambiarPausa(env, conversacionId, pausar, minutos) {
   await env.DB.prepare("UPDATE conversaciones SET pausado_hasta = ?, actualizado_en = ? WHERE id = ?")
     .bind(hasta, ahora(), conversacionId).run();
   return hasta;
+}
+
+/** Los ajustes que el dueño cambió desde el panel. */
+export async function leerAjustes(env) {
+  try {
+    const { results } = await env.DB.prepare("SELECT clave, valor FROM ajustes").all();
+    return Object.fromEntries((results || []).map((r) => [r.clave, r.valor]));
+  } catch {
+    return {};   // si la tabla aún no existe, valen los valores por defecto
+  }
+}
+
+export async function guardarAjuste(env, clave, valor) {
+  await env.DB.prepare(
+    `INSERT INTO ajustes (clave, valor, guardado) VALUES (?, ?, ?)
+     ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor, guardado = excluded.guardado`
+  ).bind(clave, valor == null ? null : String(valor), ahora()).run();
 }
 
 export async function listarLeads(env, limite = 200) {

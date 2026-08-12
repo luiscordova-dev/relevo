@@ -74,7 +74,7 @@ export async function evaluar(env, modelo) {
   for (const e of ESCENARIOS) {
     total += e.peso;
     try {
-      const crudo = await pensar(entorno, e.turnos);
+      const crudo = await pensar(entorno, e.turnos, { tipo: "calidad" });
       const r = separarDatos(crudo);
       const ok = !!e.valida(r);
       if (ok) puntos += e.peso;

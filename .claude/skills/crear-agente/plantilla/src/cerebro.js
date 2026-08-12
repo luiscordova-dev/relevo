@@ -2,6 +2,7 @@
 
 import { negocio } from "../negocio.js";
 import { bloqueDeHerramientas } from "./herramientas.js";
+import { registrarUso } from "./datos.js";
 
 const MARCA_INICIO = "<<<DATOS>>>";
 const MARCA_FIN = "<<<FIN>>>";
@@ -120,14 +121,30 @@ export function separarDatos(respuestaCruda) {
  * Llama al modelo. Por default usa el que viene gratis con Cloudflare; si el
  * dueño conectó su propia llave, usa esa.
  */
-export async function pensar(env, mensajes) {
+export async function pensar(env, mensajes, contexto = {}) {
   const conSistema = [{ role: "system", content: construirSystemPrompt(env) }, ...mensajes];
+  const t0 = Date.now();
+  const anotar = (modelo, uso, exacto) => registrarUso(env, {
+    conversacionId: contexto.conversacionId, tipo: contexto.tipo || "cerebro",
+    modelo, uso, exacto, ms: Date.now() - t0,
+  });
 
-  if (env.OPENAI_API_KEY) return llamarOpenAI(env.OPENAI_API_KEY, env.MODELO_PROPIO, conSistema);
-  if (env.ANTHROPIC_API_KEY) return llamarAnthropic(env.ANTHROPIC_API_KEY, env.MODELO_PROPIO, conSistema);
+  // Con llave propia el cobro lo hace el proveedor, no Cloudflare: guardamos los
+  // tokens pero sin neurons, y el panel lo muestra marcado como tal.
+  if (env.OPENAI_API_KEY) {
+    const { texto, usage } = await llamarOpenAI(env.OPENAI_API_KEY, env.MODELO_PROPIO, conSistema);
+    await anotar(env.MODELO_PROPIO || "gpt-4.1-mini", usage, false);
+    return texto;
+  }
+  if (env.ANTHROPIC_API_KEY) {
+    const { texto, usage } = await llamarAnthropic(env.ANTHROPIC_API_KEY, env.MODELO_PROPIO, conSistema);
+    await anotar(env.MODELO_PROPIO || "claude-sonnet-5", usage, false);
+    return texto;
+  }
 
   const modelo = env.MODELO_CEREBRO || "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
   const r = await env.AI.run(modelo, { messages: conSistema, max_tokens: 600 });
+  await anotar(modelo, r?.usage, true);
   return r?.response ?? r?.choices?.[0]?.message?.content ?? "";
 }
 
@@ -138,7 +155,13 @@ async function llamarOpenAI(key, modelo, messages) {
     body: JSON.stringify({ model: modelo || "gpt-4.1-mini", messages, max_tokens: 600 }),
   });
   if (!r.ok) throw new Error(`OpenAI ${r.status}: ${(await r.text()).slice(0, 200)}`);
-  return (await r.json()).choices?.[0]?.message?.content ?? "";
+  const d = await r.json();
+  return {
+    texto: d.choices?.[0]?.message?.content ?? "",
+    usage: {
+      prompt_tokens: d.usage?.prompt_tokens, completion_tokens: d.usage?.completion_tokens,
+    },
+  };
 }
 
 async function llamarAnthropic(key, modelo, messages) {
@@ -158,5 +181,11 @@ async function llamarAnthropic(key, modelo, messages) {
     }),
   });
   if (!r.ok) throw new Error(`Anthropic ${r.status}: ${(await r.text()).slice(0, 200)}`);
-  return ((await r.json()).content || []).map((c) => c.text || "").join("");
+  const d = await r.json();
+  return {
+    texto: (d.content || []).map((c) => c.text || "").join(""),
+    usage: {
+      prompt_tokens: d.usage?.input_tokens, completion_tokens: d.usage?.output_tokens,
+    },
+  };
 }

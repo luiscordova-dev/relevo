@@ -1,6 +1,7 @@
 // Oído y Vista: convierte notas de voz y fotos en texto que el cerebro entiende.
 
 import { descargarAdjunto } from "./zernio.js";
+import { registrarUso } from "./datos.js";
 
 /** btoa() revienta el stack con archivos grandes: hay que ir por bloques. */
 function aBase64(bytes) {
@@ -12,26 +13,30 @@ function aBase64(bytes) {
 }
 
 /** 🎙️ Nota de voz → texto. */
-export async function escuchar(env, url) {
+export async function escuchar(env, url, conversacionId) {
   const bytes = await descargarAdjunto(env, url);
-  const r = await env.AI.run(env.MODELO_OIDO || "@cf/openai/whisper-large-v3-turbo", {
-    audio: aBase64(bytes),
-  });
+  const modelo = env.MODELO_OIDO || "@cf/openai/whisper-large-v3-turbo";
+  const t0 = Date.now();
+  const r = await env.AI.run(modelo, { audio: aBase64(bytes) });
+  await registrarUso(env, { conversacionId, tipo: "oido", modelo, uso: r?.usage, ms: Date.now() - t0 });
   const texto = (r?.text || "").trim();
   if (!texto) throw new Error("El audio llegó vacío o no se entendió nada");
   return texto;
 }
 
 /** 👁️ Foto → descripción. */
-export async function ver(env, url) {
+export async function ver(env, url, conversacionId) {
   const bytes = await descargarAdjunto(env, url);
-  const r = await env.AI.run(env.MODELO_VISTA || "@cf/meta/llama-3.2-11b-vision-instruct", {
+  const modelo = env.MODELO_VISTA || "@cf/meta/llama-3.2-11b-vision-instruct";
+  const t0 = Date.now();
+  const r = await env.AI.run(modelo, {
     prompt:
       "Un cliente mandó esta imagen por WhatsApp a un negocio. Describe en español, en 2 frases, " +
       "qué se ve. Si hay texto, números o precios, transcríbelos exactamente.",
     image: [...bytes],
     max_tokens: 300,
   });
+  await registrarUso(env, { conversacionId, tipo: "vista", modelo, uso: r?.usage, ms: Date.now() - t0 });
   const texto = (r?.response || r?.description || "").trim();
   if (!texto) throw new Error("No pude interpretar la imagen");
   return texto;
@@ -41,7 +46,7 @@ export async function ver(env, url) {
  * Convierte el mensaje que llegó en texto para el cerebro.
  * Devuelve { texto, tipo }. Si un medio falla, el agente sigue vivo y lo dice.
  */
-export async function interpretarMensaje(env, mensaje) {
+export async function interpretarMensaje(env, mensaje, conversacionId) {
   const adjunto = (mensaje.attachments || [])[0];
   const texto = (mensaje.text || "").trim();
 
@@ -49,7 +54,7 @@ export async function interpretarMensaje(env, mensaje) {
 
   if (adjunto.type === "audio" || adjunto.type === "voice") {
     try {
-      const dicho = await escuchar(env, adjunto.url);
+      const dicho = await escuchar(env, adjunto.url, conversacionId);
       return { texto: texto ? `${dicho}\n\n${texto}` : dicho, tipo: "audio" };
     } catch {
       return {
@@ -62,7 +67,7 @@ export async function interpretarMensaje(env, mensaje) {
 
   if (adjunto.type === "image") {
     try {
-      const visto = await ver(env, adjunto.url);
+      const visto = await ver(env, adjunto.url, conversacionId);
       const desc = `[El cliente mandó una foto. Se ve: ${visto}]`;
       return { texto: texto ? `${desc}\n\n${texto}` : desc, tipo: "imagen" };
     } catch {
