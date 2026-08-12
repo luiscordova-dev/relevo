@@ -4,7 +4,9 @@ CREATE TABLE IF NOT EXISTS conversaciones (
   id              TEXT PRIMARY KEY,        -- id de conversación de Zernio
   telefono        TEXT NOT NULL,
   nombre_contacto TEXT,
-  pausado_hasta   INTEGER,                 -- epoch ms; si es futuro, el agente calla
+  -- epoch ms; si es futuro, el agente calla. PAUSA_INDEFINIDA = hasta que el
+  -- dueño reactive a mano desde el panel.
+  pausado_hasta   INTEGER,
   creado_en       INTEGER NOT NULL,
   actualizado_en  INTEGER NOT NULL
 );
@@ -12,7 +14,7 @@ CREATE TABLE IF NOT EXISTS conversaciones (
 CREATE TABLE IF NOT EXISTS mensajes (
   id                  INTEGER PRIMARY KEY AUTOINCREMENT,
   conversacion_id     TEXT NOT NULL,
-  rol                 TEXT NOT NULL,       -- 'cliente' | 'agente'
+  rol                 TEXT NOT NULL,       -- 'cliente' | 'agente' | 'dueño'
   texto               TEXT NOT NULL,
   tipo                TEXT NOT NULL DEFAULT 'texto',  -- texto | audio | imagen
   -- Clave de idempotencia: Zernio reintenta hasta 7 veces. Sin esto, un reintento

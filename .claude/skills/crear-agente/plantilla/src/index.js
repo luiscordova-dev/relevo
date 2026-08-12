@@ -11,6 +11,7 @@
 
 import { atender } from "./agente.js";
 import { renderPanel } from "./panel.js";
+import { apiInbox } from "./inbox.js";
 import { enviarReporteDiario } from "./reporte.js";
 import { registrarEvento } from "./datos.js";
 import { autoprueba } from "./autoprueba.js";
@@ -27,9 +28,15 @@ export default {
 
       if (url.pathname === "/panel") {
         if (!claveOk(url, env)) return respuestaClave();
-        return new Response(await renderPanel(env), {
+        return new Response(renderPanel(), {
           headers: { "Content-Type": "text/html; charset=utf-8" },
         });
+      }
+
+      // API del panel: listar conversaciones, abrir un hilo, responder, pausar.
+      if (url.pathname.startsWith("/api/")) {
+        if (!claveOk(url, env)) return Response.json({ error: "clave" }, { status: 401 });
+        return await apiInbox(request, env, url);
       }
 
       if (url.pathname === "/prueba" && request.method === "POST") {

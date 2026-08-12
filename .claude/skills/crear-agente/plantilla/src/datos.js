@@ -102,6 +102,48 @@ export async function guardarLead(env, {
   return leadDeConversacion(env, conversacionId);
 }
 
+/** Pausa "hasta que reactives" (año 2099). Distinta de la pausa por escalación. */
+export const PAUSA_INDEFINIDA = 4070908800000;
+
+/** Lista para el inbox: cada conversación con su último mensaje y su estado. */
+export async function listarConversaciones(env, limite = 100) {
+  const { results } = await env.DB.prepare(`
+    SELECT c.id, c.telefono, c.nombre_contacto, c.pausado_hasta, c.actualizado_en,
+           l.nombre AS lead_nombre, l.interes, l.escalado,
+           (SELECT texto FROM mensajes m WHERE m.conversacion_id = c.id
+             ORDER BY m.id DESC LIMIT 1) AS ultimo_texto,
+           (SELECT rol FROM mensajes m WHERE m.conversacion_id = c.id
+             ORDER BY m.id DESC LIMIT 1) AS ultimo_rol,
+           (SELECT COUNT(*) FROM mensajes m WHERE m.conversacion_id = c.id) AS total_mensajes
+      FROM conversaciones c
+      LEFT JOIN leads l ON l.conversacion_id = c.id
+     ORDER BY c.actualizado_en DESC
+     LIMIT ?`).bind(limite).all();
+  return results || [];
+}
+
+/** El hilo completo de una conversación. */
+export async function hiloCompleto(env, conversacionId, limite = 300) {
+  const cab = await env.DB.prepare(`
+    SELECT c.*, l.nombre AS lead_nombre, l.interes, l.motivo, l.escalado
+      FROM conversaciones c LEFT JOIN leads l ON l.conversacion_id = c.id
+     WHERE c.id = ?`).bind(conversacionId).first();
+  if (!cab) return null;
+  const { results } = await env.DB.prepare(
+    `SELECT rol, texto, tipo, creado_en FROM mensajes
+      WHERE conversacion_id = ? ORDER BY id ASC LIMIT ?`
+  ).bind(conversacionId, limite).all();
+  return { ...cab, mensajes: results || [] };
+}
+
+/** Pausar hasta que reactiven, o reactivar ya. */
+export async function cambiarPausa(env, conversacionId, pausar, minutos) {
+  const hasta = pausar ? (minutos ? ahora() + minutos * 60_000 : PAUSA_INDEFINIDA) : null;
+  await env.DB.prepare("UPDATE conversaciones SET pausado_hasta = ?, actualizado_en = ? WHERE id = ?")
+    .bind(hasta, ahora(), conversacionId).run();
+  return hasta;
+}
+
 export async function listarLeads(env, limite = 200) {
   const { results } = await env.DB.prepare(
     `SELECT * FROM leads ORDER BY actualizado_en DESC LIMIT ?`
