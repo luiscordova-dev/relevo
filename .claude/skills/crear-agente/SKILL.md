@@ -84,10 +84,12 @@ Guarda progreso. Enséñale un resumen corto de lo que entendiste y pídele que 
    > Te va a llegar un mensaje del **`<sandboxNumber>`**. Respóndele lo que sea — un "hola"
    > basta — y me avisas.
 5. Espera a que la sesión pase a `active` (revisa cada ~15 s).
-6. **Ya con la sesión activa**, saca el id de la cuenta de WhatsApp y déjalo en
-   `wrangler.jsonc`. Ojo: **no está en `accounts:list`** — sale de la conversación que se
-   acaba de crear. Sin este id, el agente contestaría mensajes que no son suyos
-   (los webhooks de Zernio son por cuenta, no por número). Ver `referencias/zernio.md`.
+6. **Ya con la sesión activa**, saca el id de la cuenta de WhatsApp y ponlo en
+   `wrangler.jsonc` reemplazando `ID-DE-TU-WHATSAPP`. Ojo: **no está en `accounts:list`** —
+   sale de la conversación que se acaba de crear (ver `referencias/zernio.md`).
+   **Verifica que quedó** (`grep ZERNIO_ACCOUNT_ID wrangler.jsonc`): sin ese id el agente
+   puede leer pero **no puede contestarle a nadie**, y además respondería mensajes de otros
+   números de la misma cuenta.
 
 Dile ya, sin adornos, qué es este número: **de prueba, 50 mensajes al día, un teléfono,
 un solo agente por cuenta, para que veas funcionar tu agente.** Para clientes reales necesita su propio número, y eso

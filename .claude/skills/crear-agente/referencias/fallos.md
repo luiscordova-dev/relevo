@@ -16,6 +16,7 @@ cierra con LA acción que sigue. La persona no lee inglés técnico ni stack tra
 | `/calidad` → `revisar-informacion` | Falta detalle del negocio y por eso inventa | Pregúntale qué NO ofrece y qué le preguntan seguido; complétalo en `negocio.js` |
 | `/calidad` → `usar-llave-propia` | Ningún modelo incluido da el ancho | Ofrécele conectar su OpenAI/Anthropic; si no quiere, dile que revise las respuestas los primeros días |
 | Al responder desde el panel: error de envío | Pasaron más de 24 h desde el último mensaje del cliente | Explícale la regla de WhatsApp; que le escriba desde su WhatsApp personal con el botón del panel |
+| El agente guarda los mensajes pero nunca contesta | Falta `ZERNIO_ACCOUNT_ID` en `wrangler.jsonc` | Sácalo de `inbox:conversations`, ponlo, publica de nuevo. `/salud` lo marca con ❌ en `whatsapp.cuenta` |
 | `wrangler deploy` pide login | La sesión se venció | `npx wrangler login` otra vez |
 | El agente no contesta en WhatsApp | Revisa en orden: sesión sandbox `active` → webhook registrado → `webhooks:get-logs` → `/salud` | Arregla el primero que salga mal |
 | El agente no contesta un chat específico | Está pausado porque el dueño tomó el control | Dile que en el panel presione **▶ Reactivar** |

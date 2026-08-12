@@ -153,14 +153,25 @@ export async function autoprueba(env) {
     return { evidencia: `Aviso urgente entregado (id ${id}) y el agente se pausó en ese chat` };
   }, "Mismo arreglo que el aviso de interesados: revisa el bot de Telegram.", 1);
 
-  // 7 · WhatsApp conectado (solo lectura: no le escribe a nadie)
+  // 7 · WhatsApp conectado (solo lectura: no le escribe a nadie).
+  //     Las DOS cosas son obligatorias: con la llave sola, el agente puede leer
+  //     pero no contestar — y eso es un agente muerto que parece vivo.
   await correr("📱 WhatsApp conectado", async () => {
-    if (!env.ZERNIO_API_KEY) throw new Error("Falta la llave de Zernio");
+    if (!env.ZERNIO_API_KEY) {
+      throw fallo("Falta la llave de WhatsApp",
+        "Vuelve a generar la llave de Zernio y guárdala como secreto.");
+    }
+    if (!env.ZERNIO_ACCOUNT_ID || env.ZERNIO_ACCOUNT_ID.startsWith("ID-DE-")) {
+      throw fallo("Falta decirle a tu agente cuál es tu número de WhatsApp",
+        "Sin esto no puede contestarle a nadie. Saca el accountId con " +
+        "`zernio inbox:conversations --platform whatsapp` y ponlo en ZERNIO_ACCOUNT_ID " +
+        "dentro de wrangler.jsonc; luego publica de nuevo.");
+    }
     const res = await fetch("https://zernio.com/api/v1/inbox/conversations?platform=whatsapp&limit=1", {
       headers: { Authorization: `Bearer ${env.ZERNIO_API_KEY}` },
     });
     if (!res.ok) throw new Error(`Zernio respondió ${res.status}`);
-    return { evidencia: `Llave válida y número ${env.ZERNIO_ACCOUNT_ID ? "asignado" : "sin filtrar"}` };
+    return { evidencia: "Llave válida y número asignado" };
   }, "Vuelve a generar la llave de Zernio y guárdala de nuevo.");
 
   // Limpieza: el lead de prueba no se queda en el panel del dueño.

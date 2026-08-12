@@ -24,9 +24,11 @@
     "ZONA_HORARIA": "America/Mexico_City",
     "MODELO_CEREBRO": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
     "MODELO_OIDO": "@cf/openai/whisper-large-v3-turbo",
-    "MODELO_VISTA": "@cf/meta/llama-3.2-11b-vision-instruct"
-    // ZERNIO_ACCOUNT_ID lo agrega la skill: identifica TU número.
-    // No es secreto, pero sin él tu agente contestaría mensajes de otros números.
+    "MODELO_VISTA": "@cf/meta/llama-3.2-11b-vision-instruct",
+    // Identifica TU número de WhatsApp. Sin esto el agente NO PUEDE CONTESTAR
+    // (y además respondería mensajes de otros números de la misma cuenta).
+    // La skill lo saca de `zernio inbox:conversations` y lo pone aquí.
+    "ZERNIO_ACCOUNT_ID": "ID-DE-TU-WHATSAPP"
   },
 
   "observability": { "enabled": true }
