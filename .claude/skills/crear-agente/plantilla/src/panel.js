@@ -62,15 +62,16 @@ body{margin:0;background:var(--lienzo);color:var(--txt);
 main{max-width:1240px;margin:-10px auto 0;background:var(--tarjeta);
      border:1px solid var(--borde);border-radius:var(--r);box-shadow:var(--sombra);
      overflow:hidden;min-height:64vh}
-.filtros{display:flex;gap:4px;padding:12px;border-bottom:1px solid var(--borde);
-         background:var(--tarjeta)}
+.filtros{display:flex;flex-direction:column;gap:10px;padding:12px;
+         border-bottom:1px solid var(--borde);background:var(--tarjeta)}
+.tabs{display:flex;gap:4px}
 .tab{padding:8px 15px;border:0;background:transparent;color:var(--sec);border-radius:var(--r-sm);
      font:600 13px Poppins,sans-serif;cursor:pointer;transition:background .14s,color .14s}
 .tab:hover{background:var(--apagado);color:var(--txt)}
 .tab.on{background:var(--morado);color:#fff}
-.busca{flex:1;min-width:80px;border:1px solid var(--borde-fuerte);border-radius:var(--r-sm);
-       padding:8px 12px;font:400 13px Poppins,sans-serif;background:var(--lienzo);color:var(--txt);
-       outline:none;transition:border-color .14s,box-shadow .14s}
+.busca{width:100%;border:1px solid var(--borde-fuerte);border-radius:var(--r-sm);
+       padding:9px 13px;font:400 13.5px Poppins,sans-serif;background:var(--lienzo);color:var(--txt);
+       outline:none;transition:border-color .14s,box-shadow .14s;-webkit-appearance:none}
 .busca:focus{border-color:var(--morado);box-shadow:var(--anillo)}
 
 /* ── Lista ── */
@@ -358,9 +359,12 @@ ${marca.fuente ? `<link rel="preconnect" href="https://fonts.gstatic.com" crosso
 
 <main>
   <div class="filtros">
-    <button class="tab on" data-v="conversaciones">Conversaciones</button>
-    <button class="tab" data-v="interesados">Interesados</button>
-    <input id="busca" class="busca" type="search" placeholder="Buscar…" aria-label="Buscar conversaciones">
+    <input id="busca" class="busca" type="search" placeholder="Buscar por nombre o palabra"
+           aria-label="Buscar conversaciones">
+    <div class="tabs">
+      <button class="tab on" data-v="conversaciones">Conversaciones</button>
+      <button class="tab" data-v="interesados">Interesados</button>
+    </div>
   </div>
   <div id="lista"></div>
   <div id="nada">

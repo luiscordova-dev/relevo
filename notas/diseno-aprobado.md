@@ -1,4 +1,4 @@
-# AGENT KIT — Diseño aprobado
+# EL KIT — Diseño aprobado
 **Fecha:** 2026-08-12 · **Estado:** aprobado por Luis · **Siguiente paso:** plan de implementación
 
 ---
@@ -37,7 +37,7 @@ Estas exclusiones se comunican en README y video como decisión, no como carenci
 
 ## El hueco que tapa
 
-El kit de referencia (Hainrixz/whatsapp-agentkit) promete en su prompt
+El kit de referencia (el kit de referencia) promete en su prompt
 "conectarte con alguien del equipo" (CLAUDE.md:326) pero sus herramientas de
 registro/aviso/escalación están comentadas sin implementar (CLAUDE.md:950-960).
 El interesado se pierde y el dueño nunca se entera. **Que la captura y el aviso
@@ -47,7 +47,7 @@ SÍ funcionen — probados — es el requisito #1 de este kit.**
 
 - Del kit de referencia: ni código, ni prompts, ni README, ni textos, ni el
   cierre con el Instagram de su autor. Solo la IDEA de la estructura.
-- De Forja (forjabots.com): ni una línea de código ni copy. Es producto de un
+- Del producto de terceros que sirvió de referencia: ni una línea de código ni copy. Es producto de un
   tercero (Luis tiene licencia de uso, no de redistribución). Sirvió como
   **catálogo de inspiración** de superpoderes y como prueba de existencia
   técnica (ej. Zernio sí entrega audios/fotos por webhook). El patrón de
@@ -108,7 +108,7 @@ guardado + aviso con **código determinista**.
 
 ---
 
-## Superpoderes del agente (mapeo final vs catálogo Forja)
+## Superpoderes del agente (mapeo final vs catálogo de referencia)
 
 | Superpoder | Estado | Implementación |
 |---|---|---|
