@@ -3,6 +3,9 @@
 import { negocio } from "../negocio.js";
 import { pensar, separarDatos } from "./cerebro.js";
 import { interpretarMensaje } from "./medios.js";
+import {
+  hayHerramientas, pedidoDeHerramienta, ejecutar, resultadoParaElCerebro, MAX_VUELTAS,
+} from "./herramientas.js";
 import { responder, marcarLeida } from "./zernio.js";
 import { avisarLead, avisarEscalacion } from "./avisos.js";
 import {
@@ -17,7 +20,8 @@ const MINUTOS_PAUSA = 60;
  * Devuelve un reporte de lo que pasó — lo usa la autoprueba como evidencia.
  */
 export async function atender(env, { mensaje, conversacion: conv }) {
-  const paso = { respondido: null, transcripcion: null, lead: null, escalacion: null, avisoId: null };
+  const paso = { respondido: null, transcripcion: null, lead: null, escalacion: null,
+                 avisoId: null, herramientas: null };
 
   const telefono = conv.participantId || mensaje.sender?.phoneNumber || "";
   const nombreWa = conv.participantName || mensaje.sender?.name || null;
@@ -41,9 +45,35 @@ export async function atender(env, { mensaje, conversacion: conv }) {
 
   await marcarLeida(env, conv.id);
 
-  // 4. Pensar con el historial de la conversación.
+  // 4. Pensar con el historial. Si el agente tiene herramientas conectadas, aquí
+  //    puede pedir una, ver el resultado y recién entonces contestar.
   const previos = await historial(env, conv.id);
-  const crudo = await pensar(env, previos);
+  let crudo = await pensar(env, previos);
+
+  if (hayHerramientas(env)) {
+    const conversacionInterna = [...previos];
+    for (let vuelta = 0; vuelta < MAX_VUELTAS; vuelta++) {
+      const pedido = pedidoDeHerramienta(crudo);
+      if (!pedido) break;
+
+      const resultado = await ejecutar(env, pedido, telefono);
+      await registrarEvento(env, "herramienta", {
+        id: pedido.id, ok: resultado.ok, error: resultado.error,
+      });
+      paso.herramientas = [...(paso.herramientas || []), { id: pedido.id, ok: resultado.ok }];
+
+      conversacionInterna.push({ role: "assistant", content: crudo });
+      conversacionInterna.push(resultadoParaElCerebro(pedido.id, resultado));
+      crudo = await pensar(env, conversacionInterna);
+    }
+    // Si tras las vueltas permitidas sigue pidiendo herramientas, se corta:
+    // el cliente lleva demasiado esperando y prefiere una respuesta honesta.
+    if (pedidoDeHerramienta(crudo)) {
+      await registrarEvento(env, "error", "El cerebro se quedó pidiendo herramientas en ciclo");
+      crudo = "Déjame confirmarlo con el equipo y te digo en un momento. ¿Me pasas tu nombre?";
+    }
+  }
+
   const { visible, datos } = separarDatos(crudo);
 
   const salida = visible || "Perdón, ¿me lo puedes repetir?";

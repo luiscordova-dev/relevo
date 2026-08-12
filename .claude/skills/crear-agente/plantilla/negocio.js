@@ -38,6 +38,29 @@ LO QUE MÁS NOS PREGUNTAN
 - ¿Atienden hombres? Sí, claro.
 `.trim(),
 
+  // ── HERRAMIENTAS (opcional) ──────────────────────────────────────────────
+  // Lo que tu agente puede HACER, no solo contestar. Se conectan con Composio.
+  // Pídeselo a Claude: "quiero que mi agente pueda agendar en mi Google Calendar".
+  //
+  //   id     — cómo lo llama tu agente (invéntalo, corto y claro)
+  //   para   — cuándo usarlo. Esto es lo que lee el cerebro: sé específico
+  //   datos  — qué información necesita pedirle al cliente antes
+  //   tool   — el slug real de Composio
+  //   fijos  — valores que siempre van igual (tu calendario, tu tablero…)
+  //
+  // Ejemplo:
+  // herramientas: [
+  //   { id: "ver_huecos", tool: "GOOGLECALENDAR_FIND_FREE_SLOTS",
+  //     para: "revisar qué horarios hay libres antes de ofrecer una cita",
+  //     datos: "el día que pide el cliente",
+  //     fijos: { calendar_id: "primary" } },
+  //   { id: "agendar", tool: "GOOGLECALENDAR_CREATE_EVENT",
+  //     para: "apartar la cita cuando el cliente ya eligió día y hora",
+  //     datos: "nombre del cliente, día y hora",
+  //     fijos: { calendar_id: "primary" } },
+  // ],
+  herramientas: [],
+
   // Qué NO debe hacer, más allá de las reglas base. Una por línea.
   reglasExtra: [
     "Nunca prometas un precio cerrado de balayage: siempre di 'desde $1,200, depende del largo'.",

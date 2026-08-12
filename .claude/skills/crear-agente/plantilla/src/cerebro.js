@@ -1,6 +1,7 @@
 // El cerebro: arma el prompt, llama al modelo y separa el texto visible de los datos.
 
 import { negocio } from "../negocio.js";
+import { bloqueDeHerramientas } from "./herramientas.js";
 
 const MARCA_INICIO = "<<<DATOS>>>";
 const MARCA_FIN = "<<<FIN>>>";
@@ -11,7 +12,7 @@ const TONOS = {
   divertido: "Relajado y con chispa, de tú. Emojis bienvenidos, sin pasarse.",
 };
 
-export function construirSystemPrompt() {
+export function construirSystemPrompt(env) {
   const reglasExtra = (negocio.reglasExtra || []).map((r) => `- ${r}`).join("\n");
 
   return `Eres ${negocio.nombreAgente}, quien atiende el WhatsApp de ${negocio.nombreNegocio}.
@@ -120,7 +121,7 @@ export function separarDatos(respuestaCruda) {
  * dueño conectó su propia llave, usa esa.
  */
 export async function pensar(env, mensajes) {
-  const conSistema = [{ role: "system", content: construirSystemPrompt() }, ...mensajes];
+  const conSistema = [{ role: "system", content: construirSystemPrompt(env) }, ...mensajes];
 
   if (env.OPENAI_API_KEY) return llamarOpenAI(env.OPENAI_API_KEY, env.MODELO_PROPIO, conSistema);
   if (env.ANTHROPIC_API_KEY) return llamarAnthropic(env.ANTHROPIC_API_KEY, env.MODELO_PROPIO, conSistema);
