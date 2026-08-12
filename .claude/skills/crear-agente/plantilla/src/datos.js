@@ -105,27 +105,72 @@ export async function guardarLead(env, {
 /** Pausa "hasta que reactives" (año 2099). Distinta de la pausa por escalación. */
 export const PAUSA_INDEFINIDA = 4070908800000;
 
-/** Lista para el inbox: cada conversación con su último mensaje y su estado. */
-export async function listarConversaciones(env, limite = 100) {
+/**
+ * Lista para el inbox. El último mensaje ignora las notas privadas: son tuyas,
+ * no parte de la conversación con el cliente.
+ */
+export async function listarConversaciones(env, { limite = 200, orden = "reciente" } = {}) {
+  const dir = orden === "antiguo" ? "ASC" : "DESC";
   const { results } = await env.DB.prepare(`
     SELECT c.id, c.telefono, c.nombre_contacto, c.pausado_hasta, c.actualizado_en,
+           c.cerrada, c.recordatorio, c.etiquetas,
            l.nombre AS lead_nombre, l.interes, l.escalado,
-           (SELECT texto FROM mensajes m WHERE m.conversacion_id = c.id
+           (SELECT texto FROM mensajes m WHERE m.conversacion_id = c.id AND m.rol != 'nota'
              ORDER BY m.id DESC LIMIT 1) AS ultimo_texto,
-           (SELECT rol FROM mensajes m WHERE m.conversacion_id = c.id
+           (SELECT rol FROM mensajes m WHERE m.conversacion_id = c.id AND m.rol != 'nota'
              ORDER BY m.id DESC LIMIT 1) AS ultimo_rol,
            (SELECT COUNT(*) FROM mensajes m WHERE m.conversacion_id = c.id) AS total_mensajes
       FROM conversaciones c
       LEFT JOIN leads l ON l.conversacion_id = c.id
-     ORDER BY c.actualizado_en DESC
+     ORDER BY c.actualizado_en ${dir}
      LIMIT ?`).bind(limite).all();
+  return results || [];
+}
+
+/** Cerrar o reabrir. Cerrar nunca borra: solo la saca de la bandeja del día. */
+export async function cambiarCierre(env, conversacionId, cerrada) {
+  await env.DB.prepare("UPDATE conversaciones SET cerrada = ? WHERE id = ?")
+    .bind(cerrada ? 1 : 0, conversacionId).run();
+}
+
+/** Recordatorio: epoch ms, o null para quitarlo. */
+export async function ponerRecordatorio(env, conversacionId, cuando) {
+  await env.DB.prepare("UPDATE conversaciones SET recordatorio = ? WHERE id = ?")
+    .bind(cuando || null, conversacionId).run();
+}
+
+export async function guardarEtiquetas(env, conversacionId, etiquetas) {
+  const limpio = [...new Set((etiquetas || [])
+    .map((e) => String(e).trim().slice(0, 24)).filter(Boolean))].slice(0, 8);
+  await env.DB.prepare("UPDATE conversaciones SET etiquetas = ? WHERE id = ?")
+    .bind(limpio.join(",") || null, conversacionId).run();
+  return limpio;
+}
+
+/** Todas las etiquetas que el dueño ha usado, para sugerírselas. */
+export async function etiquetasUsadas(env) {
+  const { results } = await env.DB.prepare(
+    "SELECT etiquetas FROM conversaciones WHERE etiquetas IS NOT NULL"
+  ).all();
+  const set = new Set();
+  for (const r of results || []) String(r.etiquetas).split(",").forEach((e) => e && set.add(e));
+  return [...set].sort();
+}
+
+/** Recordatorios que ya vencieron. Los usa el cron. */
+export async function recordatoriosVencidos(env) {
+  const { results } = await env.DB.prepare(`
+    SELECT c.id, c.telefono, c.recordatorio, l.nombre AS lead_nombre, l.interes,
+           c.nombre_contacto
+      FROM conversaciones c LEFT JOIN leads l ON l.conversacion_id = c.id
+     WHERE c.recordatorio IS NOT NULL AND c.recordatorio <= ?`).bind(ahora()).all();
   return results || [];
 }
 
 /** El hilo completo de una conversación. */
 export async function hiloCompleto(env, conversacionId, limite = 300) {
   const cab = await env.DB.prepare(`
-    SELECT c.*, l.nombre AS lead_nombre, l.interes, l.motivo, l.escalado
+    SELECT c.*, l.nombre AS lead_nombre, l.interes, l.motivo, l.escalado, l.creado_en AS lead_desde
       FROM conversaciones c LEFT JOIN leads l ON l.conversacion_id = c.id
      WHERE c.id = ?`).bind(conversacionId).first();
   if (!cab) return null;

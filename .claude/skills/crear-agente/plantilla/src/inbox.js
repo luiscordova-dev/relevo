@@ -1,25 +1,28 @@
-// La API del inbox: lo que el panel consulta y ejecuta.
-// Todo pasa por la clave del dueño (lo valida index.js antes de llegar aquí).
+// La API del panel. Todo pasa por la clave del dueño (la valida index.js).
 
 import { responder } from "./zernio.js";
 import {
-  listarConversaciones, hiloCompleto, cambiarPausa, guardarMensaje,
-  obtenerConversacion, registrarEvento, PAUSA_INDEFINIDA,
+  listarConversaciones, hiloCompleto, cambiarPausa, guardarMensaje, cambiarCierre,
+  ponerRecordatorio, guardarEtiquetas, etiquetasUsadas, obtenerConversacion,
+  registrarEvento, PAUSA_INDEFINIDA,
 } from "./datos.js";
 
 // Cuando el dueño contesta a mano, el agente se calla solo. Si nunca reactiva,
 // vuelve al día siguiente en lugar de quedarse mudo para siempre.
 const HORAS_PAUSA_AL_CONTESTAR = 8;
 
+const leerJson = async (request) => request.json().catch(() => ({}));
+
 export async function apiInbox(request, env, url) {
   const ruta = url.pathname.replace("/api/", "");
 
   if (ruta === "conversaciones") {
-    const lista = await listarConversaciones(env);
+    const [conversaciones, etiquetas] = await Promise.all([
+      listarConversaciones(env, { orden: url.searchParams.get("orden") || "reciente" }),
+      etiquetasUsadas(env),
+    ]);
     return Response.json({
-      ahora: Date.now(),
-      pausaIndefinida: PAUSA_INDEFINIDA,
-      conversaciones: lista,
+      ahora: Date.now(), pausaIndefinida: PAUSA_INDEFINIDA, etiquetas, conversaciones,
     });
   }
 
@@ -30,7 +33,7 @@ export async function apiInbox(request, env, url) {
   }
 
   if (ruta === "responder" && request.method === "POST") {
-    const { id, texto } = await request.json();
+    const { id, texto } = await leerJson(request);
     if (!id || !String(texto || "").trim()) {
       return Response.json({ error: "Falta el mensaje" }, { status: 400 });
     }
@@ -56,11 +59,40 @@ export async function apiInbox(request, env, url) {
     return Response.json({ ok: true, messageId, pausadoHasta: hasta });
   }
 
+  // Nota privada: se guarda en el hilo pero NUNCA sale por WhatsApp.
+  if (ruta === "nota" && request.method === "POST") {
+    const { id, texto } = await leerJson(request);
+    if (!id || !String(texto || "").trim()) {
+      return Response.json({ error: "Falta la nota" }, { status: 400 });
+    }
+    await guardarMensaje(env, { conversacionId: id, rol: "nota", texto, tipo: "texto" });
+    return Response.json({ ok: true });
+  }
+
   if (ruta === "pausa" && request.method === "POST") {
-    const { id, pausar } = await request.json();
-    await obtenerConversacion(env, id, "", null); // asegura que exista
+    const { id, pausar } = await leerJson(request);
+    await obtenerConversacion(env, id, "", null);
     const hasta = await cambiarPausa(env, id, !!pausar);
     return Response.json({ ok: true, pausadoHasta: hasta });
+  }
+
+  if (ruta === "cerrar" && request.method === "POST") {
+    const { id, cerrada } = await leerJson(request);
+    await cambiarCierre(env, id, !!cerrada);
+    return Response.json({ ok: true, cerrada: !!cerrada });
+  }
+
+  if (ruta === "recordatorio" && request.method === "POST") {
+    const { id, minutos } = await leerJson(request);
+    const cuando = minutos ? Date.now() + Number(minutos) * 60_000 : null;
+    await ponerRecordatorio(env, id, cuando);
+    return Response.json({ ok: true, recordatorio: cuando });
+  }
+
+  if (ruta === "etiquetas" && request.method === "POST") {
+    const { id, etiquetas } = await leerJson(request);
+    const guardadas = await guardarEtiquetas(env, id, etiquetas);
+    return Response.json({ ok: true, etiquetas: guardadas });
   }
 
   return Response.json({ error: "Ruta desconocida" }, { status: 404 });

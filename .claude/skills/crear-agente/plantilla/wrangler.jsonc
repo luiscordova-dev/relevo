@@ -17,8 +17,8 @@
     }
   ],
 
-  // El reporte diario: 3:00 am hora de México (9:00 UTC).
-  "triggers": { "crons": ["0 9 * * *"] },
+  // Cada 15 min revisa recordatorios; a las 3:00 am de México manda el reporte diario.
+  "triggers": { "crons": ["*/15 * * * *"] },
 
   "vars": {
     "ZONA_HORARIA": "America/Mexico_City",

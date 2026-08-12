@@ -169,14 +169,21 @@ footer a{color:var(--morado);text-decoration:none;font-weight:600}
 }
 `;
 
-const JS = String.raw`
-const CLAVE = new URLSearchParams(location.search).get('clave') || '';
+const JS = String.raw`const CLAVE = new URLSearchParams(location.search).get('clave') || '';
 const api = (r, o) => fetch('/api/' + r + (r.includes('?') ? '&' : '?') + 'clave=' + encodeURIComponent(CLAVE), o)
   .then(x => x.json());
-let vista = 'conversaciones', abierta = null, datos = { conversaciones: [] }, enviando = false;
+
+let vista = 'conversaciones', estado = 'abiertas', orden = 'reciente', etiquetaFiltro = '';
+let abierta = null, datos = { conversaciones: [], etiquetas: [] }, hiloActual = null;
+let modo = 'responder', gaveta = null, enviando = false;
+
+const EMOJIS = ['😊','👍','🙏','✨','🎉','❤️','👋','✅','😅','🔥','🙌','💪','🤝','😍','📍','💰',
+                '📸','⏰','🎂','☕','🚗','📦','💬','😉','🥳','👏','🌟','😃','🤗','💡'];
 
 const esc = s => String(s == null ? '' : s).replace(/[<>&]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
 const ini = s => (String(s || '?').trim()[0] || '?').toUpperCase();
+const listaEtiquetas = c => (c.etiquetas || '').split(',').filter(Boolean);
+
 function reloj(ms) {
   return new Date(ms).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
 }
@@ -193,48 +200,67 @@ function cuando(ms) {
   if (d < 86400000) return Math.floor(d / 3600000) + ' h';
   return new Date(ms).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
 }
+function faltaPara(ms) {
+  const d = ms - Date.now();
+  if (d <= 0) return 'ya';
+  if (d < 3600000) return 'en ' + Math.round(d / 60000) + ' min';
+  if (d < 86400000) return 'en ' + Math.round(d / 3600000) + ' h';
+  return 'en ' + Math.round(d / 86400000) + ' d';
+}
 const pausada = c => c.pausado_hasta && c.pausado_hasta > Date.now();
 // Tú tienes el control y el cliente escribió después: le debes respuesta.
 const teToca = c => pausada(c) && c.ultimo_rol === 'cliente';
 const nombreDe = c => c.lead_nombre || c.nombre_contacto || c.telefono || 'Sin nombre';
 
 async function cargar() {
-  datos = await api('conversaciones');
+  datos = await api('conversaciones?orden=' + orden);
   pinta();
 }
 
 function pinta() {
   const cs = datos.conversaciones || [];
-  const leads = cs.filter(c => c.lead_nombre || c.interes);
-  document.getElementById('nConv').textContent = cs.length;
-  document.getElementById('nLeads').textContent = leads.length;
-  const urgentes = cs.filter(c => c.escalado).length;
+  const abiertas = cs.filter(c => !c.cerrada);
+  document.getElementById('nConv').textContent = abiertas.length;
+  document.getElementById('nLeads').textContent = abiertas.filter(c => c.lead_nombre || c.interes).length;
+  const urgentes = abiertas.filter(c => c.escalado || teToca(c)).length;
   document.getElementById('nEsc').textContent = urgentes;
   document.getElementById('dUrge').classList.toggle('hay', urgentes > 0);
+
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.v === vista));
+  pintaSelectorEtiquetas();
 
   const q = (document.getElementById('busca').value || '').trim().toLowerCase();
-  let items = vista === 'conversaciones' ? cs : leads;
+  let items = cs;
+  if (estado === 'abiertas') items = items.filter(c => !c.cerrada);
+  else if (estado === 'cerradas') items = items.filter(c => c.cerrada);
+  if (vista === 'interesados') items = items.filter(c => c.lead_nombre || c.interes);
+  if (etiquetaFiltro) items = items.filter(c => listaEtiquetas(c).includes(etiquetaFiltro));
   if (q) items = items.filter(c =>
-    (nombreDe(c) + ' ' + (c.interes || '') + ' ' + (c.ultimo_texto || '')).toLowerCase().includes(q));
+    (nombreDe(c) + ' ' + (c.interes || '') + ' ' + (c.ultimo_texto || '') + ' ' + (c.etiquetas || ''))
+      .toLowerCase().includes(q));
+
   const lista = document.getElementById('lista');
   if (!items.length) {
-    lista.innerHTML = q
-      ? '<div class="vacio"><b>Nada con ese texto</b>Prueba con otro nombre o palabra.</div>'
-      : '<div class="vacio"><b>Todavía no hay nada por aquí.</b>' +
-        'Cuando alguien le escriba a tu WhatsApp, la conversación aparece aquí y ' +
-        'puedes tomar el control cuando quieras.</div>';
+    lista.innerHTML = '<div class="vacio"><b>' +
+      (q || etiquetaFiltro ? 'Nada con ese filtro' :
+       estado === 'cerradas' ? 'No has cerrado ninguna' : 'Todavía no hay nada por aquí.') +
+      '</b>' + (q || etiquetaFiltro ? 'Prueba con otra palabra o quita el filtro.' :
+       'Cuando alguien le escriba a tu WhatsApp, la conversación aparece aquí.') + '</div>';
     return;
   }
+
   lista.innerHTML = items.map(c => {
     const chips = [];
     if (teToca(c)) chips.push('<span class="chip rojo">Te toca contestar</span>');
-    else if (c.escalado) chips.push('<span class="chip rojo">Te necesita</span>');
+    else if (c.escalado && !c.cerrada) chips.push('<span class="chip rojo">Te necesita</span>');
     if (pausada(c)) chips.push('<span class="chip morado">Tú contestas</span>');
-    if (c.interes) chips.push('<span class="chip">' + esc(c.interes.slice(0, 34)) + '</span>');
+    if (c.recordatorio) chips.push('<span class="chip">⏰ ' + faltaPara(c.recordatorio) + '</span>');
+    listaEtiquetas(c).forEach(e => chips.push('<span class="chip eti">' + esc(e) + '</span>'));
+    if (c.interes) chips.push('<span class="chip">' + esc(c.interes.slice(0, 30)) + '</span>');
     const quien = c.ultimo_rol === 'cliente' ? '' : (c.ultimo_rol === 'dueño' ? 'Tú: ' : 'Agente: ');
-    return '<div class="fila' + (c.escalado || teToca(c) ? ' esc' : '') + (c.id === abierta ? ' sel' : '') +
-      '" data-id="' + c.id + '" onclick="abrir(\'' + c.id + '\')">' +
+    const urge = (c.escalado || teToca(c)) && !c.cerrada;
+    return '<div class="fila' + (urge ? ' esc' : '') + (c.cerrada ? ' cerrada' : '') +
+      (c.id === abierta ? ' sel' : '') + '" data-id="' + c.id + '" onclick="abrir(\'' + c.id + '\')">' +
       '<div class="ini">' + esc(ini(nombreDe(c))) + '</div><div class="cuerpo">' +
       '<div class="linea1"><span class="nom">' + esc(nombreDe(c)) + '</span>' +
       '<span class="hora">' + cuando(c.actualizado_en) + '</span></div>' +
@@ -244,8 +270,19 @@ function pinta() {
   }).join('');
 }
 
+function pintaSelectorEtiquetas() {
+  const sel = document.getElementById('fEtiqueta');
+  const disponibles = datos.etiquetas || [];
+  sel.style.display = disponibles.length ? '' : 'none';
+  if (sel.dataset.n === String(disponibles.length)) return;
+  sel.dataset.n = disponibles.length;
+  sel.innerHTML = '<option value="">Todas las etiquetas</option>' +
+    disponibles.map(e => '<option value="' + esc(e) + '">' + esc(e) + '</option>').join('');
+  sel.value = etiquetaFiltro;
+}
+
 async function abrir(id) {
-  abierta = id;
+  abierta = id; gaveta = null; modo = 'responder';
   document.querySelectorAll('.fila').forEach(f => f.classList.toggle('sel', f.dataset.id === id));
   document.getElementById('hilo').classList.add('abierto');
   document.body.classList.add('split');
@@ -257,14 +294,23 @@ async function refrescarHilo() {
   if (!abierta) return;
   const h = await api('hilo?id=' + encodeURIComponent(abierta));
   if (h.error) return;
+  hiloActual = h;
   const enPausa = h.pausado_hasta && h.pausado_hasta > Date.now();
+
   document.getElementById('hNom').textContent = h.lead_nombre || h.nombre_contacto || h.telefono;
-  document.getElementById('hSub').textContent =
-    (h.interes ? h.interes + ' · ' : '') + h.telefono;
+  document.getElementById('hSub').textContent = (h.interes ? h.interes + ' · ' : '') + h.telefono;
   const bp = document.getElementById('btnPausa');
   bp.textContent = enPausa ? 'Sigue el agente' : 'Contesto yo';
   bp.classList.toggle('activo', enPausa);
   document.getElementById('btnWa').href = 'https://wa.me/' + String(h.telefono).replace(/\D/g, '');
+  const bc = document.getElementById('btnCerrar');
+  bc.textContent = h.cerrada ? '↩' : '✓';
+  bc.title = h.cerrada ? 'Reabrir esta conversación' : 'Marcar como atendida';
+  bc.classList.toggle('activo', !!h.cerrada);
+  document.getElementById('btnRecordar').classList.toggle('activo', !!h.recordatorio);
+  document.getElementById('btnEtiquetas').classList.toggle('activo', !!h.etiquetas);
+
+  pintaGaveta();
 
   const cont = document.getElementById('msgs');
   let dia = null;
@@ -272,18 +318,102 @@ async function refrescarHilo() {
     let sep = '';
     const d = new Date(m.creado_en).toDateString();
     if (d !== dia) { dia = d; sep = '<div class="dia">' + etiquetaDia(m.creado_en) + '</div>'; }
+    if (m.rol === 'nota') {
+      return sep + '<div class="nota">📝 ' + esc(m.texto) +
+        '<span class="meta">Nota privada · ' + reloj(m.creado_en) + '</span></div>';
+    }
     const et = m.rol === 'cliente' ? '' : (m.rol === 'dueño' ? 'Tú' : 'Agente');
     const ic = m.tipo === 'audio' ? '🎙️ ' : (m.tipo === 'imagen' ? '📷 ' : '');
     return sep + '<div class="b ' + m.rol + '">' + ic + esc(m.texto) +
       '<span class="meta">' + (et ? et + ' · ' : '') + reloj(m.creado_en) + '</span></div>';
-  }).join('') + (enPausa
-    ? '<div class="aviso">⏸ El agente está callado en este chat. Tú contestas.</div>'
-    : '');
+  }).join('') +
+  (h.cerrada ? '<div class="aviso">✓ Marcaste esta conversación como atendida.</div>' : '') +
+  (enPausa ? '<div class="aviso">⏸ El agente está callado aquí. Tú contestas.</div>' : '');
   cont.scrollTop = cont.scrollHeight;
 }
 
+// ── La gaveta: etiquetas, recordatorio o ficha, una a la vez ──
+function abreGaveta(cual) { gaveta = gaveta === cual ? null : cual; pintaGaveta(); }
+
+function pintaGaveta() {
+  const g = document.getElementById('gaveta'), h = hiloActual;
+  if (!gaveta || !h) { g.style.display = 'none'; g.innerHTML = ''; return; }
+  g.style.display = 'block';
+
+  if (gaveta === 'etiquetas') {
+    const puestas = (h.etiquetas || '').split(',').filter(Boolean);
+    const sugeridas = (datos.etiquetas || []).filter(e => !puestas.includes(e));
+    g.innerHTML = '<div class="gtit">Etiquetas de esta conversación</div>' +
+      '<div class="gchips">' +
+      (puestas.length ? puestas.map(e =>
+        '<button class="chip eti quitar" onclick="quitarEtiqueta(\'' + esc(e) + '\')">' +
+        esc(e) + ' ✕</button>').join('') : '<span class="gvacio">Todavía ninguna</span>') +
+      '</div>' +
+      (sugeridas.length ? '<div class="gtit">Que ya usas</div><div class="gchips">' +
+        sugeridas.map(e => '<button class="chip" onclick="ponerEtiqueta(\'' + esc(e) + '\')">+ ' +
+        esc(e) + '</button>').join('') + '</div>' : '') +
+      '<div class="gfila"><input id="etiNueva" placeholder="Nueva etiqueta" maxlength="24">' +
+      '<button class="btn" onclick="ponerEtiqueta()">Agregar</button></div>';
+    const inp = document.getElementById('etiNueva');
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') ponerEtiqueta(); });
+  }
+
+  if (gaveta === 'recordatorio') {
+    g.innerHTML = '<div class="gtit">Recuérdame este chat…</div><div class="gchips">' +
+      '<button class="btn" onclick="recordar(60)">En 1 hora</button>' +
+      '<button class="btn" onclick="recordar(180)">En 3 horas</button>' +
+      '<button class="btn" onclick="recordar(1440)">Mañana</button>' +
+      '<button class="btn" onclick="recordar(4320)">En 3 días</button>' +
+      (h.recordatorio ? '<button class="btn" onclick="recordar(0)">Quitar el recordatorio</button>' : '') +
+      '</div>' + (h.recordatorio
+        ? '<div class="gvacio">Te aviso ' + faltaPara(h.recordatorio) + ', por Telegram.</div>'
+        : '<div class="gvacio">Te llega el aviso a tu Telegram.</div>');
+  }
+
+  if (gaveta === 'ficha') {
+    const n = (h.mensajes || []).length;
+    g.innerHTML = '<div class="gtit">Ficha</div><div class="ficha">' +
+      fila('Nombre', h.lead_nombre || h.nombre_contacto || '—') +
+      fila('Teléfono', h.telefono) +
+      fila('Qué quiere', h.interes || '—') +
+      (h.motivo ? fila('Pidió un humano', h.motivo) : '') +
+      fila('Mensajes', n) +
+      fila('Primer contacto', new Date(h.creado_en).toLocaleDateString('es-MX',
+        { day: 'numeric', month: 'long', year: 'numeric' })) +
+      '</div>';
+  }
+}
+const fila = (k, v) => '<div class="fficha"><span>' + k + '</span><b>' + esc(v) + '</b></div>';
+
+async function ponerEtiqueta(valor) {
+  const inp = document.getElementById('etiNueva');
+  const nueva = valor || (inp && inp.value.trim());
+  if (!nueva) return;
+  const puestas = (hiloActual.etiquetas || '').split(',').filter(Boolean);
+  if (!puestas.includes(nueva)) puestas.push(nueva);
+  await api('etiquetas', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: abierta, etiquetas: puestas }) });
+  await refrescarHilo(); cargar();
+}
+async function quitarEtiqueta(e) {
+  const puestas = (hiloActual.etiquetas || '').split(',').filter(Boolean).filter(x => x !== e);
+  await api('etiquetas', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: abierta, etiquetas: puestas }) });
+  await refrescarHilo(); cargar();
+}
+async function recordar(minutos) {
+  await api('recordatorio', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: abierta, minutos }) });
+  gaveta = null; await refrescarHilo(); cargar();
+}
+async function alternarCierre() {
+  await api('cerrar', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: abierta, cerrada: !hiloActual.cerrada }) });
+  await refrescarHilo(); cargar();
+}
+
 function cerrar() {
-  abierta = null;
+  abierta = null; hiloActual = null; gaveta = null;
   document.querySelectorAll('.fila.sel').forEach(f => f.classList.remove('sel'));
   document.getElementById('hilo').classList.remove('abierto');
   document.body.classList.remove('split');
@@ -297,8 +427,29 @@ async function alternarPausa() {
   await api('pausa', { method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ id: abierta, pausar }) });
   bp.disabled = false;
-  await refrescarHilo();
-  cargar();
+  await refrescarHilo(); cargar();
+}
+
+function cambiaModo(m) {
+  modo = m;
+  document.querySelectorAll('.mtab').forEach(t => t.classList.toggle('on', t.dataset.m === m));
+  const ta = document.getElementById('txt');
+  ta.placeholder = m === 'nota' ? 'Nota para ti — no le llega al cliente' : 'Escribe tu respuesta…';
+  document.getElementById('comp').classList.toggle('esnota', m === 'nota');
+  ta.focus();
+}
+
+function alternarEmojis() {
+  const p = document.getElementById('emojis');
+  if (p.dataset.listo !== '1') {
+    p.innerHTML = EMOJIS.map(e => '<button onclick="meteEmoji(\'' + e + '\')">' + e + '</button>').join('');
+    p.dataset.listo = '1';
+  }
+  p.style.display = p.style.display === 'flex' ? 'none' : 'flex';
+}
+function meteEmoji(e) {
+  const ta = document.getElementById('txt');
+  ta.value += e; ta.focus();
 }
 
 async function enviar() {
@@ -308,8 +459,10 @@ async function enviar() {
   enviando = true;
   document.getElementById('btnEnviar').disabled = true;
   document.getElementById('err').style.display = 'none';
-  const r = await api('responder', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id: abierta, texto }) });
+  document.getElementById('emojis').style.display = 'none';
+  const r = await api(modo === 'nota' ? 'nota' : 'responder',
+    { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: abierta, texto }) });
   enviando = false;
   document.getElementById('btnEnviar').disabled = false;
   if (r.error) {
@@ -318,14 +471,18 @@ async function enviar() {
     return;
   }
   ta.value = '';
-  await refrescarHilo();
-  cargar();
+  await refrescarHilo(); cargar();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.tab').forEach(t =>
     t.onclick = () => { vista = t.dataset.v; pinta(); });
+  document.querySelectorAll('.mtab').forEach(t =>
+    t.onclick = () => cambiaModo(t.dataset.m));
   document.getElementById('busca').addEventListener('input', pinta);
+  document.getElementById('fEstado').addEventListener('change', e => { estado = e.target.value; pinta(); });
+  document.getElementById('fOrden').addEventListener('change', e => { orden = e.target.value; cargar(); });
+  document.getElementById('fEtiqueta').addEventListener('change', e => { etiquetaFiltro = e.target.value; pinta(); });
   document.getElementById('txt').addEventListener('keydown', e => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviar(); }
   });
@@ -365,6 +522,18 @@ ${marca.fuente ? `<link rel="preconnect" href="https://fonts.gstatic.com" crosso
       <button class="tab on" data-v="conversaciones">Conversaciones</button>
       <button class="tab" data-v="interesados">Interesados</button>
     </div>
+    <div class="selects">
+      <select id="fEstado" aria-label="Qué conversaciones ver">
+        <option value="abiertas">Sin atender</option>
+        <option value="cerradas">Atendidas</option>
+        <option value="todas">Todas</option>
+      </select>
+      <select id="fOrden" aria-label="Orden">
+        <option value="reciente">Recientes primero</option>
+        <option value="antiguo">Antiguas primero</option>
+      </select>
+      <select id="fEtiqueta" aria-label="Filtrar por etiqueta" style="display:none"></select>
+    </div>
   </div>
   <div id="lista"></div>
   <div id="nada">
@@ -381,14 +550,28 @@ ${marca.fuente ? `<link rel="preconnect" href="https://fonts.gstatic.com" crosso
         <div class="prev" id="hSub"></div>
       </div>
       <button class="btn pausa" id="btnPausa" onclick="alternarPausa()">Contesto yo</button>
-      <a class="btn icono" id="btnWa" target="_blank" rel="noopener"
-         title="Abrir este chat en WhatsApp">💬</a>
     </div>
+    <div class="acciones">
+      <button class="ico" id="btnEtiquetas" onclick="abreGaveta('etiquetas')" title="Etiquetas">🏷️</button>
+      <button class="ico" id="btnRecordar" onclick="abreGaveta('recordatorio')" title="Recordármelo">⏰</button>
+      <button class="ico" id="btnCerrar" onclick="alternarCierre()" title="Marcar como atendida">✓</button>
+      <button class="ico" id="btnFicha" onclick="abreGaveta('ficha')" title="Ficha">📇</button>
+      <a class="ico" id="btnWa" target="_blank" rel="noopener" title="Abrir en WhatsApp">💬</a>
+    </div>
+    <div class="gaveta" id="gaveta" style="display:none"></div>
     <div class="error" id="err" style="display:none"></div>
     <div class="msgs" id="msgs"></div>
-    <div class="comp">
-      <textarea id="txt" rows="1" placeholder="Escribe tu respuesta…" aria-label="Tu respuesta"></textarea>
-      <button id="btnEnviar" onclick="enviar()" aria-label="Enviar">➤</button>
+    <div class="emojis" id="emojis" style="display:none"></div>
+    <div class="comp" id="comp">
+      <div class="modos">
+        <button class="mtab on" data-m="responder">Responder</button>
+        <button class="mtab" data-m="nota">Nota</button>
+      </div>
+      <div class="cfila">
+        <button class="ico" onclick="alternarEmojis()" title="Emojis" aria-label="Emojis">🙂</button>
+        <textarea id="txt" rows="1" placeholder="Escribe tu respuesta…" aria-label="Tu respuesta"></textarea>
+        <button id="btnEnviar" onclick="enviar()" aria-label="Enviar">➤</button>
+      </div>
     </div>
   </div>
 </main>

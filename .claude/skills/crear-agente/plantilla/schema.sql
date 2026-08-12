@@ -7,6 +7,12 @@ CREATE TABLE IF NOT EXISTS conversaciones (
   -- epoch ms; si es futuro, el agente calla. PAUSA_INDEFINIDA = hasta que el
   -- dueño reactive a mano desde el panel.
   pausado_hasta   INTEGER,
+  -- Cerrada = ya la atendiste y no quieres verla en la bandeja. No borra nada.
+  cerrada         INTEGER NOT NULL DEFAULT 0,
+  -- Recordatorio: epoch ms. Cuando llega la hora te avisa por Telegram y se limpia.
+  recordatorio    INTEGER,
+  -- Etiquetas separadas por coma. Simple a propósito: el dueño las inventa sobre la marcha.
+  etiquetas       TEXT,
   creado_en       INTEGER NOT NULL,
   actualizado_en  INTEGER NOT NULL
 );
@@ -14,7 +20,8 @@ CREATE TABLE IF NOT EXISTS conversaciones (
 CREATE TABLE IF NOT EXISTS mensajes (
   id                  INTEGER PRIMARY KEY AUTOINCREMENT,
   conversacion_id     TEXT NOT NULL,
-  rol                 TEXT NOT NULL,       -- 'cliente' | 'agente' | 'dueño'
+  -- 'nota' es privada: se guarda pero NUNCA sale por WhatsApp.
+  rol                 TEXT NOT NULL,       -- 'cliente' | 'agente' | 'dueño' | 'nota'
   texto               TEXT NOT NULL,
   tipo                TEXT NOT NULL DEFAULT 'texto',  -- texto | audio | imagen
   -- Clave de idempotencia: Zernio reintenta hasta 7 veces. Sin esto, un reintento

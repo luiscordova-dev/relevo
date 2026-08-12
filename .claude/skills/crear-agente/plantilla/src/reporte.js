@@ -1,7 +1,32 @@
 // 📊 Reporte diario por correo. Opcional: si no hay RESEND_API_KEY, no pasa nada.
 
 import { negocio } from "../negocio.js";
-import { resumenDelDia, registrarEvento } from "./datos.js";
+import { resumenDelDia, registrarEvento, recordatoriosVencidos, ponerRecordatorio } from "./datos.js";
+import { avisarTexto } from "./avisos.js";
+
+/**
+ * Recordatorios vencidos → aviso por Telegram, y se limpian para no repetirse.
+ * Corre en cada tick del cron.
+ */
+export async function dispararRecordatorios(env) {
+  const pendientes = await recordatoriosVencidos(env);
+  let enviados = 0;
+  for (const c of pendientes) {
+    const quien = c.lead_nombre || c.nombre_contacto || c.telefono;
+    try {
+      await avisarTexto(env,
+        `⏰ <b>RECORDATORIO</b>\n\nMe pediste que te recordara este chat.\n\n` +
+        `👤 <b>${String(quien).replace(/[<>&]/g, "")}</b>\n` +
+        (c.interes ? `💬 ${String(c.interes).replace(/[<>&]/g, "")}\n` : "") +
+        `\nhttps://wa.me/${String(c.telefono).replace(/\D/g, "")}`);
+      enviados++;
+    } catch (e) {
+      await registrarEvento(env, "error", `Recordatorio no enviado: ${e.message || e}`);
+    }
+    await ponerRecordatorio(env, c.id, null);
+  }
+  return enviados;
+}
 
 export async function enviarReporteDiario(env) {
   if (!env.RESEND_API_KEY || !env.CORREO_DUENO) {

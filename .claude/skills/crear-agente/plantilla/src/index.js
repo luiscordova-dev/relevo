@@ -12,7 +12,7 @@
 import { atender } from "./agente.js";
 import { renderPanel } from "./panel.js";
 import { apiInbox } from "./inbox.js";
-import { enviarReporteDiario } from "./reporte.js";
+import { enviarReporteDiario, dispararRecordatorios } from "./reporte.js";
 import { registrarEvento } from "./datos.js";
 import { autoprueba } from "./autoprueba.js";
 import { diagnosticar } from "./calidad.js";
@@ -64,9 +64,16 @@ export default {
   },
 
   async scheduled(evento, env, ctx) {
-    ctx.waitUntil(enviarReporteDiario(env).catch((e) =>
-      registrarEvento(env, "error", `Reporte diario: ${e.message || e}`)
-    ));
+    ctx.waitUntil((async () => {
+      // Los recordatorios corren siempre; el reporte solo si lo configuraron.
+      await dispararRecordatorios(env).catch((e) =>
+        registrarEvento(env, "error", `Recordatorios: ${e.message || e}`));
+      const esDeMadrugada = new Date().getUTCHours() === 9;
+      if (esDeMadrugada) {
+        await enviarReporteDiario(env).catch((e) =>
+          registrarEvento(env, "error", `Reporte diario: ${e.message || e}`));
+      }
+    })());
   },
 };
 
