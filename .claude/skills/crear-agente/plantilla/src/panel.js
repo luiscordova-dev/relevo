@@ -5,100 +5,168 @@ import { negocio } from "../negocio.js";
 import { marca } from "../marca.js";
 
 const CSS = `
-/* Identidad de marca. Cámbiala en marca.js si quieres otros colores. */
+/* ───────────────────────────────────────────────────────────────────────────
+   Sistema de tokens. Superficies en capas: lienzo → tarjeta → apagado.
+   Los colores salen de la identidad de marca; cambiarlos aquí cambia todo.
+   ─────────────────────────────────────────────────────────────────────── */
 :root{
-  --tinta:#131628; --offwhite:#FAFAFA; --blanco:#FFFFFF;
-  --morado:#6F00FF; --rojo:#F44336; --gris:#607179;
-  --bg:var(--offwhite); --card:var(--blanco); --txt:var(--tinta); --sec:var(--gris);
-  --bor:#E7E7EC; --suave:#F1F0F7; --morado-suave:#EFE6FF;
+  --tinta:#131628; --morado:#6F00FF; --rojo:#F44336; --gris:#607179;
+
+  --lienzo:#FAFAFA;            /* fondo de la página */
+  --tarjeta:#FFFFFF;           /* superficie de trabajo */
+  --apagado:#F4F2FA;           /* superficie secundaria, con un guiño al morado */
+  --borde:#E8E6F0;
+  --borde-fuerte:#D9D6E6;
+  --txt:var(--tinta);
+  --sec:var(--gris);
+  --morado-tenue:#F1E8FF;
+  --banda:var(--tinta);        /* la banda superior */
+  --banda-txt:#FFFFFF;
+  --banda-sec:#9AA0B8;
+  --banda-linea:#282C42;
+
+  --r:12px;                    /* radio base */
+  --r-sm:9px;
+  --sombra:0 1px 2px rgba(19,22,40,.04), 0 12px 32px -8px rgba(19,22,40,.10);
+  --anillo:0 0 0 3px rgba(111,0,255,.22);
 }
 @media(prefers-color-scheme:dark){:root{
-  --bg:#0C0E1A; --card:#181B2E; --txt:#F2F2F5; --sec:#98A0B0;
-  --bor:#282C42; --suave:#20243A; --morado-suave:#2A1A52;
+  --lienzo:#08090F; --tarjeta:#14172A; --apagado:#1D2138; --borde:#262B45;
+  --borde-fuerte:#333854; --txt:#F1F1F5; --sec:#98A0B8; --morado-tenue:#2C1660;
+  --banda:#0E1122; --banda-linea:#232742;
+  --sombra:0 1px 2px rgba(0,0,0,.4), 0 12px 32px -8px rgba(0,0,0,.5);
 }}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{margin:0;background:var(--bg);color:var(--txt);
-     font:400 15px/1.45 Poppins,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
-header{background:var(--card);border-bottom:1px solid var(--bor);padding:14px 16px;
-       position:sticky;top:0;z-index:5}
-h1{font-size:19px;font-weight:800;letter-spacing:-.2px;margin:0}
-.sub{color:var(--sec);font-size:12px;margin-top:2px}
-.nums{display:flex;gap:16px;margin-top:12px;font-size:12px;color:var(--sec)}
-.nums b{color:var(--txt);font-size:17px;font-weight:800;margin-right:4px}
-.tabs{display:flex;gap:8px;margin-top:14px}
-.tab{flex:1;padding:9px;border:1px solid var(--bor);background:transparent;color:var(--sec);
-     border-radius:10px;font:600 13px Poppins,sans-serif;cursor:pointer}
-.tab.on{background:var(--morado);color:#fff;border-color:var(--morado)}
-main{max-width:1000px;margin:0 auto}
-.fila{display:flex;gap:12px;align-items:flex-start;padding:13px 16px;background:var(--card);
-      border-bottom:1px solid var(--bor);cursor:pointer}
-.fila:active{background:var(--suave)}
-.ini{width:42px;height:42px;border-radius:50%;background:var(--morado-suave);color:var(--morado);
-     flex:none;display:flex;align-items:center;justify-content:center;font-weight:800}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--lienzo);color:var(--txt);
+     font:400 15px/1.55 Poppins,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+     -webkit-font-smoothing:antialiased}
+:focus-visible{outline:none;box-shadow:var(--anillo);border-radius:var(--r-sm)}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* ── La banda: identidad y triaje de un vistazo ── */
+.banda{background:var(--banda);color:var(--banda-txt);padding:16px 16px 20px}
+.banda-int{max-width:1240px;margin:0 auto;display:flex;align-items:flex-end;
+           gap:24px;flex-wrap:wrap}
+.marca{flex:1;min-width:200px}
+.marca h1{font-size:21px;font-weight:800;letter-spacing:-.4px;margin:0}
+.marca p{margin:3px 0 0;font-size:13px;color:var(--banda-sec)}
+.triaje{display:flex;gap:22px}
+.dato b{display:block;font-size:20px;font-weight:800;line-height:1.05;
+        font-variant-numeric:tabular-nums;letter-spacing:-.5px}
+.dato span{font-size:10.5px;color:var(--banda-sec);letter-spacing:.06em;text-transform:uppercase}
+.dato.urge.hay b{color:var(--rojo)}      /* solo se enciende si de verdad hay alguien */
+
+/* ── El área de trabajo: papel blanco sobre el escritorio ── */
+main{max-width:1240px;margin:-10px auto 0;background:var(--tarjeta);
+     border:1px solid var(--borde);border-radius:var(--r);box-shadow:var(--sombra);
+     overflow:hidden;min-height:64vh}
+.filtros{display:flex;gap:4px;padding:12px;border-bottom:1px solid var(--borde);
+         background:var(--tarjeta)}
+.tab{padding:8px 15px;border:0;background:transparent;color:var(--sec);border-radius:var(--r-sm);
+     font:600 13px Poppins,sans-serif;cursor:pointer;transition:background .14s,color .14s}
+.tab:hover{background:var(--apagado);color:var(--txt)}
+.tab.on{background:var(--morado);color:#fff}
+.busca{flex:1;min-width:80px;border:1px solid var(--borde-fuerte);border-radius:var(--r-sm);
+       padding:8px 12px;font:400 13px Poppins,sans-serif;background:var(--lienzo);color:var(--txt);
+       outline:none;transition:border-color .14s,box-shadow .14s}
+.busca:focus{border-color:var(--morado);box-shadow:var(--anillo)}
+
+/* ── Lista ── */
+.fila{display:flex;gap:12px;align-items:flex-start;padding:14px 16px 14px 13px;
+      border-bottom:1px solid var(--borde);cursor:pointer;position:relative;
+      border-left:3px solid transparent;transition:background .14s,border-color .14s}
+.fila:hover{background:var(--apagado)}
+.fila.sel{background:var(--morado-tenue);border-left-color:var(--morado)}
+.fila.esc{border-left-color:var(--morado)}     /* el riel: quién te necesita, sin leer */
+.ini{width:42px;height:42px;border-radius:999px;background:var(--apagado);color:var(--sec);
+     flex:none;display:grid;place-items:center;font-weight:800;font-size:15px}
 .fila.esc .ini{background:var(--morado);color:#fff}
 .cuerpo{flex:1;min-width:0}
 .linea1{display:flex;align-items:baseline;gap:8px}
-.nom{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hora{margin-left:auto;color:var(--sec);font-size:11px;flex:none}
-.prev{color:var(--sec);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
-.chips{display:flex;gap:5px;margin-top:6px;flex-wrap:wrap}
-.chip{font:700 10px Poppins,sans-serif;padding:3px 8px;border-radius:20px;background:var(--suave);color:var(--sec)}
+.nom{font-weight:600;letter-spacing:-.15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hora{margin-left:auto;color:var(--sec);font-size:11px;flex:none;font-variant-numeric:tabular-nums}
+.prev{color:var(--sec);font-size:13px;white-space:nowrap;overflow:hidden;
+      text-overflow:ellipsis;margin-top:2px}
+.chips{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap}
+.chip{font:600 10.5px Poppins,sans-serif;padding:3px 9px;border-radius:999px;
+      background:var(--apagado);color:var(--sec);letter-spacing:.01em}
 .chip.rojo{background:var(--rojo);color:#fff}
-.chip.morado{background:var(--morado);color:#fff}
-.vacio{padding:52px 24px;text-align:center;color:var(--sec)}
-.vacio p{margin:6px 0}
-.vacio b{color:var(--txt);font-weight:800}
+.chip.morado{background:var(--morado-tenue);color:var(--morado)}
+.vacio{padding:64px 28px;text-align:center;color:var(--sec);font-size:14px}
+.vacio b,#nada b{display:block;color:var(--txt);font-weight:800;font-size:16px;margin-bottom:6px}
+#nada{color:var(--sec)}
 
-/* Hilo */
-#hilo{position:fixed;inset:0;background:var(--bg);display:none;flex-direction:column;z-index:10}
-#hilo.abierto{display:flex}
-.hcab{background:var(--card);border-bottom:1px solid var(--bor);padding:11px 12px;
-      display:flex;align-items:center;gap:10px}
-.volver{background:none;border:0;font-size:24px;color:var(--txt);cursor:pointer;padding:0 4px}
+/* ── Hilo ── */
+.hcab{padding:13px 14px;border-bottom:1px solid var(--borde);display:flex;
+      align-items:center;gap:10px;flex:none;background:var(--tarjeta)}
 .hcab .cuerpo{flex:1;min-width:0}
-.hcab .nom{font-size:15px}
-.hcab .btn{flex:none}
-.btn.solo-icono{font-size:15px;padding:8px 12px;line-height:1}
-.btn{border:1px solid var(--bor);background:var(--card);color:var(--txt);border-radius:9px;
-     padding:8px 11px;font:600 12px Poppins,sans-serif;cursor:pointer;white-space:nowrap;
-     text-decoration:none;display:inline-block}
+.hcab .nom{font-size:15px;font-weight:700}
+.volver{background:none;border:0;font-size:24px;color:var(--txt);cursor:pointer;
+        padding:0 6px 0 2px;line-height:1}
+.btn{border:1px solid var(--borde-fuerte);background:var(--tarjeta);color:var(--txt);
+     border-radius:var(--r-sm);padding:8px 13px;font:600 12.5px Poppins,sans-serif;
+     cursor:pointer;white-space:nowrap;text-decoration:none;flex:none;
+     transition:border-color .14s,background .14s,color .14s}
+.btn:hover{border-color:var(--morado);color:var(--morado)}
 .btn.pausa{border-color:var(--morado);color:var(--morado)}
 .btn.activo{background:var(--morado);color:#fff;border-color:var(--morado)}
-.msgs{flex:1;overflow-y:auto;padding:16px 12px;display:flex;flex-direction:column;gap:8px}
-.b{max-width:78%;padding:9px 12px;border-radius:14px;font-size:14px;white-space:pre-wrap;
-   word-wrap:break-word}
-.b .meta{display:block;font-size:10px;opacity:.65;margin-top:4px}
-.b.cliente{align-self:flex-start;background:var(--card);border:1px solid var(--bor)}
-.b.agente{align-self:flex-end;background:var(--suave)}
-.b.dueño{align-self:flex-end;background:var(--morado);color:#fff}
-.aviso{align-self:center;font-size:11px;color:var(--sec);background:var(--suave);
-       padding:6px 14px;border-radius:20px;text-align:center;max-width:88%}
-.comp{background:var(--card);border-top:1px solid var(--bor);padding:10px;display:flex;gap:8px;
-      align-items:flex-end}
-.comp textarea{flex:1;border:1px solid var(--bor);border-radius:22px;padding:11px 15px;resize:none;
-      font:400 15px Poppins,sans-serif;background:var(--bg);color:var(--txt);max-height:110px}
-.comp button{background:var(--morado);color:#fff;border:0;border-radius:50%;width:44px;height:44px;
-      font-size:18px;cursor:pointer;flex:none}
-.comp button:disabled{opacity:.4}
-.error{background:var(--rojo);color:#fff;padding:10px 12px;font-size:13px;text-align:center}
-#nada{display:none}
-footer{padding:22px 16px 30px;text-align:center;color:var(--sec);font-size:12px}
+.btn.activo:hover{color:#fff;opacity:.92}
+.btn.icono{padding:8px 11px;font-size:14px;line-height:1.2}
+.msgs{flex:1;overflow-y:auto;padding:20px 16px;display:flex;flex-direction:column;
+      gap:10px;background:var(--lienzo)}
+.b{max-width:72%;padding:10px 13px;border-radius:14px;font-size:14px;line-height:1.5;
+   white-space:pre-wrap;word-wrap:break-word}
+.b .meta{display:block;font-size:10px;opacity:.62;margin-top:5px;letter-spacing:.02em}
+.b.cliente{align-self:flex-start;background:var(--tarjeta);border:1px solid var(--borde);
+           border-bottom-left-radius:4px}
+.b.agente{align-self:flex-end;background:var(--apagado);border-bottom-right-radius:4px}
+.b.dueño{align-self:flex-end;background:var(--morado);color:#fff;border-bottom-right-radius:4px}
+.dia{align-self:center;font:600 11px Poppins,sans-serif;color:var(--sec);
+     letter-spacing:.04em;text-transform:capitalize;margin:10px 0 2px}
+.aviso{align-self:center;font-size:11.5px;color:var(--sec);background:var(--apagado);
+       padding:7px 15px;border-radius:999px;text-align:center;max-width:88%}
+.comp{padding:12px;display:flex;gap:9px;align-items:flex-end;flex:none;
+      border-top:1px solid var(--borde);background:var(--tarjeta)}
+.comp textarea{flex:1;border:1px solid var(--borde-fuerte);border-radius:22px;padding:11px 16px;
+      resize:none;font:400 15px Poppins,sans-serif;background:var(--tarjeta);color:var(--txt);
+      max-height:120px;outline:none;transition:border-color .14s,box-shadow .14s}
+.comp textarea:focus{border-color:var(--morado);box-shadow:var(--anillo)}
+.comp button{background:var(--morado);color:#fff;border:0;border-radius:999px;
+      width:44px;height:44px;font-size:16px;cursor:pointer;flex:none;transition:opacity .14s}
+.comp button:hover{opacity:.9}
+.comp button:disabled{opacity:.35;cursor:default}
+.error{background:var(--rojo);color:#fff;padding:11px 14px;font-size:13px;
+       text-align:center;flex:none}
+footer{padding:20px 16px 34px;text-align:center;color:var(--sec);font-size:12px}
 footer a{color:var(--morado);text-decoration:none;font-weight:600}
-@media(min-width:820px){
-  #hilo{position:static;display:none}
-  #hilo.abierto{display:flex;height:calc(100vh - 148px);border-left:1px solid var(--bor)}
-  .split main{display:flex;max-width:1000px;margin:0 auto}
-  .split #lista{flex:0 0 340px;border-right:1px solid var(--bor);overflow-y:auto;
-                height:calc(100vh - 148px)}
-  .split #hilo{flex:1}
-  .split footer{display:none}
+
+/* ── Móvil: la lista manda, el hilo entra encima ── */
+#nada{display:none}
+#hilo{position:fixed;inset:0;z-index:20;background:var(--tarjeta);display:none;
+      flex-direction:column}
+#hilo.abierto{display:flex}
+
+/* ── Escritorio: dos paneles dentro de la misma hoja ── */
+@media(min-width:900px){
+  .banda{padding:22px 20px 24px}
+  .dato b{font-size:24px}
+  main{display:grid;grid-template-columns:360px 1fr;
+       grid-template-rows:auto 1fr;              /* sin esto, la fila de filtros se estira */
+       grid-template-areas:"filtros hilo" "lista hilo";
+       height:calc(100vh - 150px);min-height:480px}
+  .filtros{grid-area:filtros;border-right:1px solid var(--borde)}
+  #lista{grid-area:lista;overflow-y:auto;border-right:1px solid var(--borde)}
+  #nada,#hilo{grid-area:hilo}
+  #hilo{position:static;display:none;min-width:0}
+  #hilo.abierto{display:flex}
+  #nada{display:grid;place-items:center;text-align:center;padding:40px;
+        color:var(--sec);font-size:14px;line-height:1.7}
+  body.split #nada{display:none}
   .volver{display:none}
-  #nada{display:flex;flex:1;align-items:center;justify-content:center;text-align:center;
-        color:var(--sec);font-size:14px;height:calc(100vh - 148px);border-left:1px solid var(--bor)}
-  .split #nada{display:none}
-  main{display:flex}
-  #lista{flex:0 0 340px;overflow-y:auto;height:calc(100vh - 148px);border-right:1px solid var(--bor)}
-}`;
+}
+`;
 
 const JS = String.raw`
 const CLAVE = new URLSearchParams(location.search).get('clave') || '';
@@ -108,6 +176,15 @@ let vista = 'conversaciones', abierta = null, datos = { conversaciones: [] }, en
 
 const esc = s => String(s == null ? '' : s).replace(/[<>&]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
 const ini = s => (String(s || '?').trim()[0] || '?').toUpperCase();
+function reloj(ms) {
+  return new Date(ms).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+}
+function etiquetaDia(ms) {
+  const d = new Date(ms), hoy = new Date(), ayer = new Date(Date.now() - 86400000);
+  if (d.toDateString() === hoy.toDateString()) return 'Hoy';
+  if (d.toDateString() === ayer.toDateString()) return 'Ayer';
+  return d.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' });
+}
 function cuando(ms) {
   const d = Date.now() - ms;
   if (d < 60000) return 'ahora';
@@ -116,6 +193,8 @@ function cuando(ms) {
   return new Date(ms).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
 }
 const pausada = c => c.pausado_hasta && c.pausado_hasta > Date.now();
+// Tú tienes el control y el cliente escribió después: le debes respuesta.
+const teToca = c => pausada(c) && c.ultimo_rol === 'cliente';
 const nombreDe = c => c.lead_nombre || c.nombre_contacto || c.telefono || 'Sin nombre';
 
 async function cargar() {
@@ -128,24 +207,33 @@ function pinta() {
   const leads = cs.filter(c => c.lead_nombre || c.interes);
   document.getElementById('nConv').textContent = cs.length;
   document.getElementById('nLeads').textContent = leads.length;
-  document.getElementById('nEsc').textContent = cs.filter(c => c.escalado).length;
+  const urgentes = cs.filter(c => c.escalado).length;
+  document.getElementById('nEsc').textContent = urgentes;
+  document.getElementById('dUrge').classList.toggle('hay', urgentes > 0);
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.v === vista));
 
-  const items = vista === 'conversaciones' ? cs : leads;
+  const q = (document.getElementById('busca').value || '').trim().toLowerCase();
+  let items = vista === 'conversaciones' ? cs : leads;
+  if (q) items = items.filter(c =>
+    (nombreDe(c) + ' ' + (c.interes || '') + ' ' + (c.ultimo_texto || '')).toLowerCase().includes(q));
   const lista = document.getElementById('lista');
   if (!items.length) {
-    lista.innerHTML = '<div class="vacio"><p><b>Todavía no hay nada por aquí.</b></p>' +
-      '<p>Cuando alguien le escriba a tu WhatsApp, la conversación aparece aquí y ' +
-      'tú puedes tomar el control cuando quieras.</p></div>';
+    lista.innerHTML = q
+      ? '<div class="vacio"><b>Nada con ese texto</b>Prueba con otro nombre o palabra.</div>'
+      : '<div class="vacio"><b>Todavía no hay nada por aquí.</b>' +
+        'Cuando alguien le escriba a tu WhatsApp, la conversación aparece aquí y ' +
+        'puedes tomar el control cuando quieras.</div>';
     return;
   }
   lista.innerHTML = items.map(c => {
     const chips = [];
-    if (c.escalado) chips.push('<span class="chip rojo">Te necesita</span>');
+    if (teToca(c)) chips.push('<span class="chip rojo">Te toca contestar</span>');
+    else if (c.escalado) chips.push('<span class="chip rojo">Te necesita</span>');
     if (pausada(c)) chips.push('<span class="chip morado">Tú contestas</span>');
     if (c.interes) chips.push('<span class="chip">' + esc(c.interes.slice(0, 34)) + '</span>');
     const quien = c.ultimo_rol === 'cliente' ? '' : (c.ultimo_rol === 'dueño' ? 'Tú: ' : 'Agente: ');
-    return '<div class="fila' + (c.escalado ? ' esc' : '') + '" onclick="abrir(\'' + c.id + '\')">' +
+    return '<div class="fila' + (c.escalado || teToca(c) ? ' esc' : '') + (c.id === abierta ? ' sel' : '') +
+      '" data-id="' + c.id + '" onclick="abrir(\'' + c.id + '\')">' +
       '<div class="ini">' + esc(ini(nombreDe(c))) + '</div><div class="cuerpo">' +
       '<div class="linea1"><span class="nom">' + esc(nombreDe(c)) + '</span>' +
       '<span class="hora">' + cuando(c.actualizado_en) + '</span></div>' +
@@ -157,6 +245,7 @@ function pinta() {
 
 async function abrir(id) {
   abierta = id;
+  document.querySelectorAll('.fila').forEach(f => f.classList.toggle('sel', f.dataset.id === id));
   document.getElementById('hilo').classList.add('abierto');
   document.body.classList.add('split');
   document.getElementById('msgs').innerHTML = '<div class="aviso">Cargando…</div>';
@@ -172,16 +261,20 @@ async function refrescarHilo() {
   document.getElementById('hSub').textContent =
     (h.interes ? h.interes + ' · ' : '') + h.telefono;
   const bp = document.getElementById('btnPausa');
-  bp.textContent = enPausa ? '▶ Reactivar' : '⏸ Contesto yo';
+  bp.textContent = enPausa ? 'Sigue el agente' : 'Contesto yo';
   bp.classList.toggle('activo', enPausa);
   document.getElementById('btnWa').href = 'https://wa.me/' + String(h.telefono).replace(/\D/g, '');
 
   const cont = document.getElementById('msgs');
+  let dia = null;
   cont.innerHTML = (h.mensajes || []).map(m => {
+    let sep = '';
+    const d = new Date(m.creado_en).toDateString();
+    if (d !== dia) { dia = d; sep = '<div class="dia">' + etiquetaDia(m.creado_en) + '</div>'; }
     const et = m.rol === 'cliente' ? '' : (m.rol === 'dueño' ? 'Tú' : 'Agente');
     const ic = m.tipo === 'audio' ? '🎙️ ' : (m.tipo === 'imagen' ? '📷 ' : '');
-    return '<div class="b ' + m.rol + '">' + ic + esc(m.texto) +
-      '<span class="meta">' + (et ? et + ' · ' : '') + cuando(m.creado_en) + '</span></div>';
+    return sep + '<div class="b ' + m.rol + '">' + ic + esc(m.texto) +
+      '<span class="meta">' + (et ? et + ' · ' : '') + reloj(m.creado_en) + '</span></div>';
   }).join('') + (enPausa
     ? '<div class="aviso">⏸ El agente está callado en este chat. Tú contestas.</div>'
     : '');
@@ -190,6 +283,7 @@ async function refrescarHilo() {
 
 function cerrar() {
   abierta = null;
+  document.querySelectorAll('.fila.sel').forEach(f => f.classList.remove('sel'));
   document.getElementById('hilo').classList.remove('abierto');
   document.body.classList.remove('split');
   cargar();
@@ -230,6 +324,7 @@ async function enviar() {
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.tab').forEach(t =>
     t.onclick = () => { vista = t.dataset.v; pinta(); });
+  document.getElementById('busca').addEventListener('input', pinta);
   document.getElementById('txt').addEventListener('keydown', e => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviar(); }
   });
@@ -243,57 +338,61 @@ export function renderPanel() {
   return `<!doctype html><html lang="es"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#6F00FF">
+<meta name="theme-color" content="#131628">
 <title>${esc(negocio.nombreNegocio)}</title>
 ${marca.fuente ? `<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="${marca.fuente}">` : ""}
 <style>${CSS}</style></head><body>
-<header>
-  <h1>${esc(negocio.nombreNegocio)}</h1>
-  <div class="sub">${esc(negocio.nombreAgente)} está atendiendo tu WhatsApp</div>
-  <div class="nums">
-    <span><b id="nConv">0</b>conversaciones</span>
-    <span><b id="nLeads">0</b>interesados</span>
-    <span><b id="nEsc">0</b>te necesitan</span>
+
+<div class="banda"><div class="banda-int">
+  <div class="marca">
+    <h1>${esc(negocio.nombreNegocio)}</h1>
+    <p>${esc(negocio.nombreAgente)} contesta tu WhatsApp, 24/7</p>
   </div>
-  <div class="tabs">
+  <div class="triaje">
+    <div class="dato"><b id="nConv">0</b><span>conversaciones</span></div>
+    <div class="dato"><b id="nLeads">0</b><span>interesados</span></div>
+    <div class="dato urge" id="dUrge"><b id="nEsc">0</b><span>te necesitan</span></div>
+  </div>
+</div></div>
+
+<main>
+  <div class="filtros">
     <button class="tab on" data-v="conversaciones">Conversaciones</button>
     <button class="tab" data-v="interesados">Interesados</button>
+    <input id="busca" class="busca" type="search" placeholder="Buscar…" aria-label="Buscar conversaciones">
   </div>
-</header>
-<main>
   <div id="lista"></div>
   <div id="nada">
     <div>
-      <div style="font-size:30px;margin-bottom:8px">💬</div>
-      Elige una conversación para leerla<br>y contestar tú mismo.
+      <b>Elige una conversación</b>
+      Ábrela para leerla completa y contestar tú mismo.
+    </div>
+  </div>
+  <div id="hilo">
+    <div class="hcab">
+      <button class="volver" onclick="cerrar()" aria-label="Volver a la lista">‹</button>
+      <div class="cuerpo">
+        <div class="nom" id="hNom"></div>
+        <div class="prev" id="hSub"></div>
+      </div>
+      <button class="btn pausa" id="btnPausa" onclick="alternarPausa()">Contesto yo</button>
+      <a class="btn icono" id="btnWa" target="_blank" rel="noopener"
+         title="Abrir este chat en WhatsApp">💬</a>
+    </div>
+    <div class="error" id="err" style="display:none"></div>
+    <div class="msgs" id="msgs"></div>
+    <div class="comp">
+      <textarea id="txt" rows="1" placeholder="Escribe tu respuesta…" aria-label="Tu respuesta"></textarea>
+      <button id="btnEnviar" onclick="enviar()" aria-label="Enviar">➤</button>
     </div>
   </div>
 </main>
+
 <footer>
-  Tu agente atiende solo, 24/7.<br>
   hecho con ${marca.url
     ? `<a href="${esc(marca.url)}" target="_blank" rel="noopener">${esc(marca.nombre)}</a>`
     : esc(marca.nombre)}
 </footer>
-
-<div id="hilo">
-  <div class="hcab">
-    <button class="volver" onclick="cerrar()">‹</button>
-    <div class="cuerpo">
-      <div class="nom" id="hNom"></div>
-      <div class="prev" id="hSub"></div>
-    </div>
-    <button class="btn pausa" id="btnPausa" onclick="alternarPausa()">⏸ Contesto yo</button>
-    <a class="btn solo-icono" id="btnWa" target="_blank" rel="noopener"
-       title="Abrir el chat en WhatsApp">💬</a>
-  </div>
-  <div class="error" id="err" style="display:none"></div>
-  <div class="msgs" id="msgs"></div>
-  <div class="comp">
-    <textarea id="txt" rows="1" placeholder="Escribe tu respuesta…"></textarea>
-    <button id="btnEnviar" onclick="enviar()">➤</button>
-  </div>
-</div>
 <script>${JS}</script></body></html>`;
 }
