@@ -286,7 +286,7 @@ ${marca.fuente ? `<link rel="preconnect" href="https://fonts.gstatic.com" crosso
     </div>
     <button class="btn pausa" id="btnPausa" onclick="alternarPausa()">⏸ Contesto yo</button>
     <a class="btn solo-icono" id="btnWa" target="_blank" rel="noopener"
-       title="Abrir en WhatsApp">↗</a>
+       title="Abrir el chat en WhatsApp">💬</a>
   </div>
   <div class="error" id="err" style="display:none"></div>
   <div class="msgs" id="msgs"></div>
