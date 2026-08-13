@@ -10,7 +10,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { atender } from "./agente.js";
-import { renderPanel } from "./panel.js";
+import { renderPanel } from "./panel/index.js";
 import { apiInbox } from "./inbox.js";
 import { enviarReporteDiario, dispararRecordatorios } from "./reporte.js";
 import { registrarEvento } from "./datos.js";

@@ -2,7 +2,7 @@
 
 import { negocio } from "../negocio.js";
 import { bloqueDeHerramientas } from "./herramientas.js";
-import { registrarUso } from "./datos.js";
+import { registrarUso, leerAjustes, ahoraMes } from "./datos.js";
 
 const MARCA_INICIO = "<<<DATOS>>>";
 const MARCA_FIN = "<<<FIN>>>";
@@ -142,7 +142,18 @@ export async function pensar(env, mensajes, contexto = {}) {
     return texto;
   }
 
-  const modelo = env.MODELO_CEREBRO || "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
+  let modelo = env.MODELO_CEREBRO || "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
+
+  // Tope mensual (Configuración): al llegar, el agente baja al modelo con salida más
+  // barata en vez de quedarse callado. Nunca deja de contestar por presupuesto.
+  const ajustes = await leerAjustes(env);
+  const tope = Number(ajustes.tope_mensual_neurons);
+  if (tope > 0) {
+    const g = await env.DB.prepare("SELECT SUM(neurons) n FROM uso WHERE creado_en >= ?")
+      .bind(ahoraMes()).first().catch(() => null);
+    if ((g?.n || 0) >= tope) modelo = "@cf/openai/gpt-oss-120b";
+  }
+
   const r = await env.AI.run(modelo, { messages: conSistema, max_tokens: 600 });
   await anotar(modelo, r?.usage, true);
   return r?.response ?? r?.choices?.[0]?.message?.content ?? "";

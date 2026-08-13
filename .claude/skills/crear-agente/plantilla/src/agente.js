@@ -10,10 +10,15 @@ import { responder, marcarLeida } from "./zernio.js";
 import { avisarLead, avisarEscalacion } from "./avisos.js";
 import {
   obtenerConversacion, estaPausada, pausar, guardarMensaje, historial,
-  guardarLead, leadDeConversacion, registrarEvento, nombreUtil,
+  guardarLead, leadDeConversacion, registrarEvento, nombreUtil, leerAjustes,
 } from "./datos.js";
 
-const MINUTOS_PAUSA = 60;
+const MINUTOS_PAUSA = 60;   // el default; el panel puede cambiarlo sin redesplegar
+
+async function minutosPausa(env) {
+  const ajustes = await leerAjustes(env);
+  return Number(ajustes.minutos_pausa_escalacion) || MINUTOS_PAUSA;
+}
 
 /**
  * Atiende un mensaje entrante de punta a punta.
@@ -143,18 +148,19 @@ async function escalar(env, { conversacionId, telefono, nombre, motivo, ultimoMe
   // El nombre que ya dio la persona manda sobre el del perfil de WhatsApp.
   const nombreBueno = nombreUtil(previo?.nombre) || nombreUtil(nombre);
 
+  const minutos = await minutosPausa(env);
   let avisoUrgenteId = null, error = null;
   try {
     avisoUrgenteId = await avisarEscalacion(env, {
       nombre: nombreBueno, telefono, motivo, ultimoMensaje,
-      interes: previo?.interes, minutosPausa: MINUTOS_PAUSA,
+      interes: previo?.interes, minutosPausa: minutos,
     });
   } catch (e) {
     error = String(e.message || e);
     await registrarEvento(env, "error", `No se pudo avisar de la escalación: ${error}`);
   }
 
-  await pausar(env, conversacionId, MINUTOS_PAUSA);
+  await pausar(env, conversacionId, minutos);
   // Ojo: NO se toca 'interes'. Que pida un humano no borra lo que quería comprar.
   await guardarLead(env, {
     conversacionId, nombre: nombreBueno, telefono, motivo, escalado: 1, avisoUrgenteId,
@@ -163,7 +169,7 @@ async function escalar(env, { conversacionId, telefono, nombre, motivo, ultimoMe
 
   return {
     nombre: nombreBueno, telefono, motivo, avisoId: avisoUrgenteId,
-    avisado: !!avisoUrgenteId, pausadoMinutos: MINUTOS_PAUSA, error,
+    avisado: !!avisoUrgenteId, pausadoMinutos: minutos, error,
   };
 }
 

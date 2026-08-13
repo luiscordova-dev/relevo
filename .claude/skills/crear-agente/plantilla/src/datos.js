@@ -3,6 +3,12 @@
 
 const ahora = () => Date.now();
 
+/** El arranque del mes en curso, en epoch ms. */
+export function ahoraMes() {
+  const d = new Date(); d.setDate(1); d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
 // Cloudflare cobra $0.011 por cada 1,000 neurons. De ahí sale el peso exacto.
 export const USD_POR_MIL_NEURONS = 0.011;
 export const aUSD = (neurons) => (neurons || 0) * USD_POR_MIL_NEURONS / 1000;
@@ -222,6 +228,68 @@ export async function cambiarPausa(env, conversacionId, pausar, minutos) {
   await env.DB.prepare("UPDATE conversaciones SET pausado_hasta = ?, actualizado_en = ? WHERE id = ?")
     .bind(hasta, ahora(), conversacionId).run();
   return hasta;
+}
+
+/** Serie de mensajes por día (para la gráfica de actividad). */
+export async function actividadPorDia(env, dias = 7) {
+  const desde = ahora() - dias * 86_400_000;
+  const { results } = await env.DB.prepare(`
+    SELECT DATE(creado_en/1000, 'unixepoch') AS dia,
+           SUM(CASE WHEN rol = 'cliente' THEN 1 ELSE 0 END) AS entrantes,
+           COUNT(*) AS total
+      FROM mensajes WHERE creado_en >= ? GROUP BY dia ORDER BY dia`).bind(desde).all();
+  return results || [];
+}
+
+/** Gasto por día (para la gráfica de costos). */
+export async function gastoPorDia(env, dias = 30) {
+  const desde = ahora() - dias * 86_400_000;
+  const { results } = await env.DB.prepare(`
+    SELECT DATE(creado_en/1000, 'unixepoch') AS dia, SUM(neurons) AS neurons, COUNT(*) AS llamadas
+      FROM uso WHERE creado_en >= ? GROUP BY dia ORDER BY dia`).bind(desde).all();
+  return results || [];
+}
+
+/** Los números del Resumen, todos de la base. */
+export async function kpis(env) {
+  const hoy0 = new Date(); hoy0.setHours(0, 0, 0, 0);
+  const mes0 = new Date(); mes0.setDate(1); mes0.setHours(0, 0, 0, 0);
+  const uno = async (sql, ...args) => (await env.DB.prepare(sql).bind(...args).first()) || {};
+
+  const [conv, leads, urg, mens24, gastoMes] = await Promise.all([
+    uno("SELECT COUNT(*) n FROM conversaciones WHERE cerrada = 0"),
+    uno("SELECT COUNT(*) n FROM leads"),
+    uno("SELECT COUNT(*) n FROM leads l JOIN conversaciones c ON c.id = l.conversacion_id WHERE l.escalado = 1 AND c.cerrada = 0"),
+    uno("SELECT COUNT(*) n FROM mensajes WHERE rol = 'cliente' AND creado_en >= ?", ahora() - 86_400_000),
+    uno("SELECT SUM(neurons) neurons, MIN(exacto) exacto, COUNT(*) llamadas FROM uso WHERE creado_en >= ?", mes0.getTime()),
+  ]);
+
+  return {
+    conversacionesAbiertas: conv.n || 0,
+    leads: leads.n || 0,
+    urgentes: urg.n || 0,
+    mensajes24h: mens24.n || 0,
+    costoMes: {
+      neurons: gastoMes.neurons || 0,
+      usd: aUSD(gastoMes.neurons || 0),
+      llamadas: gastoMes.llamadas || 0,
+      exacto: (gastoMes.exacto ?? 1) === 1,
+    },
+  };
+}
+
+/** Conteo de eventos por tipo (alimenta el grafo del flujo). */
+export async function conteoEventos(env, dias = 30) {
+  const desde = ahora() - dias * 86_400_000;
+  const { results } = await env.DB.prepare(
+    "SELECT tipo, COUNT(*) n FROM eventos WHERE creado_en >= ? GROUP BY tipo"
+  ).bind(desde).all();
+  const m = Object.fromEntries((results || []).map((r) => [r.tipo, r.n]));
+  const { results: usoTipos } = await env.DB.prepare(
+    "SELECT tipo, COUNT(*) n, SUM(neurons) neurons FROM uso WHERE creado_en >= ? GROUP BY tipo"
+  ).bind(desde).all();
+  for (const u of usoTipos || []) m["uso_" + u.tipo] = u.n;
+  return m;
 }
 
 /** Los ajustes que el dueño cambió desde el panel. */

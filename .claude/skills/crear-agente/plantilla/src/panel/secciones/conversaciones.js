@@ -1,79 +1,69 @@
-// El panel del dueño: sus conversaciones y sus interesados, desde el celular.
-// Una sola página, sin librerías ni compilación: la sirve el mismo Worker.
+// La bandeja: migrada del panel anterior, ya probada. El shell la monta como sección.
 
-import { negocio } from "../negocio.js";
-import { marca } from "../marca.js";
+export const HTML = `
+<div class="bandeja"><div class="marco">
+<div class="filtros">
+    <input id="busca" class="busca" type="search" placeholder="Buscar por nombre o palabra"
+           aria-label="Buscar conversaciones">
+    <div class="tabs">
+      <button class="tab on" data-v="conversaciones">Conversaciones</button>
+      <button class="tab" data-v="interesados">Interesados</button>
+    </div>
+    <div class="selects">
+      <select id="fEstado" aria-label="Qué conversaciones ver">
+        <option value="abiertas">Sin atender</option>
+        <option value="cerradas">Atendidas</option>
+        <option value="todas">Todas</option>
+      </select>
+      <select id="fOrden" aria-label="Orden">
+        <option value="reciente">Recientes primero</option>
+        <option value="antiguo">Antiguas primero</option>
+      </select>
+      <select id="fEtiqueta" aria-label="Filtrar por etiqueta" style="display:none"></select>
+    </div>
+  </div>
+  <div id="lista"></div>
+  <div id="nada">
+    <div>
+      <b>Elige una conversación</b>
+      Ábrela para leerla completa y contestar tú mismo.
+    </div>
+  </div>
+  <div id="hilo">
+    <div class="hcab">
+      <button class="volver" onclick="cerrar()" aria-label="Volver a la lista">‹</button>
+      <div class="cuerpo">
+        <div class="nom" id="hNom"></div>
+        <div class="prev" id="hSub"></div>
+      </div>
+      <button class="btn pausa" id="btnPausa" onclick="alternarPausa()">Contesto yo</button>
+    </div>
+    <div class="acciones">
+      <button class="ico" id="btnEtiquetas" onclick="abreGaveta('etiquetas')" title="Etiquetas">🏷️</button>
+      <button class="ico" id="btnRecordar" onclick="abreGaveta('recordatorio')" title="Recordármelo">⏰</button>
+      <button class="ico" id="btnCerrar" onclick="alternarCierre()" title="Marcar como atendida">✓</button>
+      <button class="ico" id="btnFicha" onclick="abreGaveta('ficha')" title="Ficha">📇</button>
+      <a class="ico" id="btnWa" target="_blank" rel="noopener" title="Abrir en WhatsApp">💬</a>
+    </div>
+    <div class="gaveta" id="gaveta" style="display:none"></div>
+    <div class="error" id="err" style="display:none"></div>
+    <div class="msgs" id="msgs"></div>
+    <div class="emojis" id="emojis" style="display:none"></div>
+    <div class="comp" id="comp">
+      <div class="modos">
+        <button class="mtab on" data-m="responder">Responder</button>
+        <button class="mtab" data-m="nota">Nota</button>
+      </div>
+      <div class="cfila">
+        <button class="ico" onclick="alternarEmojis()" title="Emojis" aria-label="Emojis">🙂</button>
+        <textarea id="txt" rows="1" placeholder="Escribe tu respuesta…" aria-label="Tu respuesta"></textarea>
+        <button id="btnEnviar" onclick="enviar()" aria-label="Enviar">➤</button>
+      </div>
+    </div>
+  </div>
+</div></div>`;
 
-const CSS = `
-/* ───────────────────────────────────────────────────────────────────────────
-   Sistema de tokens. Superficies en capas: lienzo → tarjeta → apagado.
-   Los colores salen de la identidad de marca; cambiarlos aquí cambia todo.
-   ─────────────────────────────────────────────────────────────────────── */
-:root{
-  --tinta:#131628; --morado:#6F00FF; --rojo:#F44336; --gris:#607179;
-
-  --lienzo:#FAFAFA;            /* fondo de la página */
-  --tarjeta:#FFFFFF;           /* superficie de trabajo */
-  --apagado:#F4F2FA;           /* superficie secundaria, con un guiño al morado */
-  --borde:#E8E6F0;
-  --borde-fuerte:#D9D6E6;
-  --txt:var(--tinta);
-  --sec:var(--gris);
-  --morado-tenue:#F1E8FF;
-  --banda:var(--tinta);        /* la banda superior */
-  --banda-txt:#FFFFFF;
-  --banda-sec:#9AA0B8;
-  --banda-linea:#282C42;
-
-  --r:12px;                    /* radio base */
-  --r-sm:9px;
-  --sombra:0 1px 2px rgba(19,22,40,.04), 0 12px 32px -8px rgba(19,22,40,.10);
-  --anillo:0 0 0 3px rgba(111,0,255,.22);
-}
-@media(prefers-color-scheme:dark){:root{
-  --lienzo:#08090F; --tarjeta:#14172A; --apagado:#1D2138; --borde:#262B45;
-  --borde-fuerte:#333854; --txt:#F1F1F5; --sec:#98A0B8; --morado-tenue:#2C1660;
-  --banda:#0E1122; --banda-linea:#232742;
-  --sombra:0 1px 2px rgba(0,0,0,.4), 0 12px 32px -8px rgba(0,0,0,.5);
-}}
-
-*{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--lienzo);color:var(--txt);
-     font:400 15px/1.55 Poppins,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-     -webkit-font-smoothing:antialiased}
-:focus-visible{outline:none;box-shadow:var(--anillo);border-radius:var(--r-sm)}
-@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
-
-/* ── La banda: identidad y triaje de un vistazo ── */
-.banda{background:var(--banda);color:var(--banda-txt);padding:16px 16px 20px}
-.banda-int{max-width:1240px;margin:0 auto;display:flex;align-items:flex-end;
-           gap:24px;flex-wrap:wrap}
-.marca{flex:1;min-width:200px}
-.marca h1{font-size:21px;font-weight:800;letter-spacing:-.4px;margin:0}
-.marca p{margin:3px 0 0;font-size:13px;color:var(--banda-sec)}
-.triaje{display:flex;gap:22px}
-.dato b{display:block;font-size:20px;font-weight:800;line-height:1.05;
-        font-variant-numeric:tabular-nums;letter-spacing:-.5px}
-.dato span{font-size:10.5px;color:var(--banda-sec);letter-spacing:.06em;text-transform:uppercase}
-.dato.urge.hay b{color:var(--rojo)}      /* solo se enciende si de verdad hay alguien */
-
-/* ── El área de trabajo: papel blanco sobre el escritorio ── */
-main{max-width:1240px;margin:-10px auto 0;background:var(--tarjeta);
-     border:1px solid var(--borde);border-radius:var(--r);box-shadow:var(--sombra);
-     overflow:hidden;min-height:64vh}
-.filtros{display:flex;flex-direction:column;gap:10px;padding:12px;
-         border-bottom:1px solid var(--borde);background:var(--tarjeta)}
-.tabs{display:flex;gap:4px}
-.tab{padding:8px 15px;border:0;background:transparent;color:var(--sec);border-radius:var(--r-sm);
-     font:600 13px Poppins,sans-serif;cursor:pointer;transition:background .14s,color .14s}
-.tab:hover{background:var(--apagado);color:var(--txt)}
-.tab.on{background:var(--morado);color:#fff}
-.busca{width:100%;border:1px solid var(--borde-fuerte);border-radius:var(--r-sm);
-       padding:9px 13px;font:400 13.5px Poppins,sans-serif;background:var(--lienzo);color:var(--txt);
-       outline:none;transition:border-color .14s,box-shadow .14s;-webkit-appearance:none}
-.busca:focus{border-color:var(--morado);box-shadow:var(--anillo)}
-
+export const CSS = `
 /* ── Lista ── */
 .fila{display:flex;gap:12px;align-items:flex-start;padding:14px 16px 14px 13px;
       border-bottom:1px solid var(--borde);cursor:pointer;position:relative;
@@ -99,6 +89,7 @@ main{max-width:1240px;margin:-10px auto 0;background:var(--tarjeta);
 .vacio b,#nada b{display:block;color:var(--txt);font-weight:800;font-size:16px;margin-bottom:6px}
 #nada{color:var(--sec)}
 
+
 /* ── Hilo ── */
 .hcab{padding:13px 14px;border-bottom:1px solid var(--borde);display:flex;
       align-items:center;gap:10px;flex:none;background:var(--tarjeta)}
@@ -107,7 +98,7 @@ main{max-width:1240px;margin:-10px auto 0;background:var(--tarjeta);
 .volver{background:none;border:0;font-size:24px;color:var(--txt);cursor:pointer;
         padding:0 6px 0 2px;line-height:1}
 .btn{border:1px solid var(--borde-fuerte);background:var(--tarjeta);color:var(--txt);
-     border-radius:var(--r-sm);padding:8px 13px;font:600 12.5px Poppins,sans-serif;
+     border-radius:999px;padding:8px 15px;font:600 12.5px Poppins,sans-serif;
      cursor:pointer;white-space:nowrap;text-decoration:none;flex:none;
      transition:border-color .14s,background .14s,color .14s}
 .btn:hover{border-color:var(--morado);color:var(--morado)}
@@ -143,36 +134,94 @@ main{max-width:1240px;margin:-10px auto 0;background:var(--tarjeta);
 footer{padding:20px 16px 34px;text-align:center;color:var(--sec);font-size:12px}
 footer a{color:var(--morado);text-decoration:none;font-weight:600}
 
-/* ── Móvil: la lista manda, el hilo entra encima ── */
-#nada{display:none}
-#hilo{position:fixed;inset:0;z-index:20;background:var(--tarjeta);display:none;
-      flex-direction:column}
-#hilo.abierto{display:flex}
 
-/* ── Escritorio: dos paneles dentro de la misma hoja ── */
+.filtros{display:flex;flex-direction:column;gap:10px;padding:12px;
+         border-bottom:1px solid var(--borde);background:var(--tarjeta)}
+.tabs{display:flex;gap:4px}
+.tabs{display:flex;gap:4px}
+.tab{padding:8px 16px;border:0;background:transparent;color:var(--sec);border-radius:999px;
+     font:600 13px Poppins,sans-serif;cursor:pointer;transition:background .14s,color .14s}
+.tab{padding:8px 16px;border:0;background:transparent;color:var(--sec);border-radius:999px;
+     font:600 13px Poppins,sans-serif;cursor:pointer;transition:background .14s,color .14s}
+.tab:hover{background:var(--apagado);color:var(--txt)}
+.tab:hover{background:var(--apagado);color:var(--txt)}
+.tab.on{background:var(--morado);color:#fff}
+.busca{width:100%;border:1px solid var(--borde-fuerte);border-radius:999px;
+       padding:9px 13px;font:400 13.5px Poppins,sans-serif;background:var(--lienzo);color:var(--txt);
+       outline:none;transition:border-color .14s,box-shadow .14s;-webkit-appearance:none}
+.busca:focus{border-color:var(--morado);box-shadow:var(--anillo)}
+.busca:focus{border-color:var(--morado);box-shadow:var(--anillo)}
+.dia{align-self:center;font:600 11px Poppins,sans-serif;color:var(--sec);
+     letter-spacing:.04em;text-transform:capitalize;margin:10px 0 2px}
+.aviso{align-self:center;font-size:11.5px;color:var(--sec);background:var(--apagado);
+       padding:7px 15px;border-radius:999px;text-align:center;max-width:88%}
+/* la bandeja dentro del shell */
+#sec-conversaciones .bandeja{max-width:1180px;margin:14px auto;padding:0 22px}
+#sec-conversaciones .marco{background:var(--tarjeta);border:1px solid var(--borde);
+  border-radius:14px;box-shadow:var(--sombra);overflow:hidden}
+#nada{display:none}
+#hilo{position:fixed;inset:0;z-index:40;background:var(--tarjeta);display:none;flex-direction:column}
+#hilo.abierto{display:flex}
 @media(min-width:900px){
-  .banda{padding:22px 20px 24px}
-  .dato b{font-size:24px}
-  main{display:grid;grid-template-columns:360px 1fr;
-       grid-template-rows:auto 1fr;              /* sin esto, la fila de filtros se estira */
-       grid-template-areas:"filtros hilo" "lista hilo";
-       height:calc(100vh - 150px);min-height:480px}
-  .filtros{grid-area:filtros;border-right:1px solid var(--borde)}
+  #sec-conversaciones .marco{display:grid;grid-template-columns:360px 1fr;
+    grid-template-rows:auto 1fr;grid-template-areas:"filtros hilo" "lista hilo";
+    height:calc(100vh - 132px);min-height:460px}
+  #sec-conversaciones .filtros{grid-area:filtros;border-right:1px solid var(--borde)}
   #lista{grid-area:lista;overflow-y:auto;border-right:1px solid var(--borde)}
   #nada,#hilo{grid-area:hilo}
-  #hilo{position:static;display:none;min-width:0}
-  #hilo.abierto{display:flex}
-  #nada{display:grid;place-items:center;text-align:center;padding:40px;
-        color:var(--sec);font-size:14px;line-height:1.7}
-  body.split #nada{display:none}
+  #hilo{position:static;min-width:0}
+  #nada{display:grid;place-items:center;text-align:center;padding:40px;color:var(--sec);
+        font-size:14px;line-height:1.7}
+  #sec-conversaciones.split #nada{display:none}
   .volver{display:none}
 }
+@media(max-width:899px){
+  #sec-conversaciones .bandeja{padding:0;margin:0}
+  #sec-conversaciones .marco{border:0;border-radius:0;box-shadow:none}
+}
+
+/* compositor en dos pisos: modos arriba, texto abajo */
+.comp{display:flex;flex-direction:column;align-items:stretch;gap:8px;padding:10px 12px;
+      border-top:1px solid var(--borde);background:var(--tarjeta)}
+.modos{display:flex;gap:6px}
+.comp .mtab{border:0;background:var(--apagado);color:var(--sec);border-radius:999px;
+      padding:5px 14px;width:auto;height:auto;font:600 12px Poppins,sans-serif;cursor:pointer}
+.comp .mtab.on{background:var(--morado);color:#fff}
+.comp.esnota .cfila textarea{background:var(--morado-tenue);border-color:var(--morado)}
+.cfila{display:flex;gap:8px;align-items:flex-end}
+.comp .cfila .ico{border:0;background:var(--apagado);color:var(--txt);border-radius:999px;
+      width:40px;height:40px;cursor:pointer;font-size:16px;flex:none}
+/* nota privada en el hilo */
+.nota{align-self:center;max-width:82%;background:var(--morado-tenue);color:var(--txt);
+      border:1px dashed var(--morado);border-radius:12px;padding:8px 13px;font-size:13px}
+.nota .meta{display:block;font-size:10px;color:var(--sec);margin-top:4px}
+/* acciones del hilo */
+.acciones{display:flex;gap:6px;padding:8px 12px;border-bottom:1px solid var(--borde);
+      background:var(--tarjeta)}
+.acciones .ico{border:1px solid var(--borde-fuerte);background:var(--tarjeta);
+      border-radius:999px;width:36px;height:36px;cursor:pointer;font-size:14px;
+      display:grid;place-items:center;text-decoration:none;transition:border-color .14s}
+.acciones .ico:hover{border-color:var(--morado)}
+.acciones .ico.activo{background:var(--morado);border-color:var(--morado)}
+.emojis{display:none;flex-wrap:wrap;gap:2px;padding:8px 12px;border-top:1px solid var(--borde);
+      background:var(--tarjeta);max-height:120px;overflow-y:auto}
+.emojis button{border:0;background:none;font-size:20px;cursor:pointer;padding:4px;border-radius:8px}
+.emojis button:hover{background:var(--apagado)}
+.gaveta{padding:12px 14px;border-bottom:1px solid var(--borde);background:var(--apagado);font-size:13px}
+.gtit{font-weight:700;font-size:12px;margin-bottom:8px}
+.gchips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.gchips .chip{cursor:pointer;border:0}
+.gfila{display:flex;gap:8px;margin-top:4px}
+.gfila input{flex:1;border:1px solid var(--borde-fuerte);border-radius:999px;padding:8px 13px;
+      font:400 13px Poppins,sans-serif;background:var(--tarjeta);color:var(--txt);outline:none}
+.gvacio{color:var(--sec);font-size:12px}
+.ficha{font-size:13.5px}
+.fficha{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--borde)}
+.fficha:last-child{border-bottom:0}
+.fficha span{color:var(--sec)}
 `;
 
-const JS = String.raw`const CLAVE = new URLSearchParams(location.search).get('clave') || '';
-const api = (r, o) => fetch('/api/' + r + (r.includes('?') ? '&' : '?') + 'clave=' + encodeURIComponent(CLAVE), o)
-  .then(x => x.json());
-
+export const JS = String.raw`
 let vista = 'conversaciones', estado = 'abiertas', orden = 'reciente', etiquetaFiltro = '';
 let abierta = null, datos = { conversaciones: [], etiquetas: [] }, hiloActual = null;
 let modo = 'responder', gaveta = null, enviando = false;
@@ -180,33 +229,8 @@ let modo = 'responder', gaveta = null, enviando = false;
 const EMOJIS = ['😊','👍','🙏','✨','🎉','❤️','👋','✅','😅','🔥','🙌','💪','🤝','😍','📍','💰',
                 '📸','⏰','🎂','☕','🚗','📦','💬','😉','🥳','👏','🌟','😃','🤗','💡'];
 
-const esc = s => String(s == null ? '' : s).replace(/[<>&]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
-const ini = s => (String(s || '?').trim()[0] || '?').toUpperCase();
 const listaEtiquetas = c => (c.etiquetas || '').split(',').filter(Boolean);
 
-function reloj(ms) {
-  return new Date(ms).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
-}
-function etiquetaDia(ms) {
-  const d = new Date(ms), hoy = new Date(), ayer = new Date(Date.now() - 86400000);
-  if (d.toDateString() === hoy.toDateString()) return 'Hoy';
-  if (d.toDateString() === ayer.toDateString()) return 'Ayer';
-  return d.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' });
-}
-function cuando(ms) {
-  const d = Date.now() - ms;
-  if (d < 60000) return 'ahora';
-  if (d < 3600000) return Math.floor(d / 60000) + ' min';
-  if (d < 86400000) return Math.floor(d / 3600000) + ' h';
-  return new Date(ms).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
-}
-function faltaPara(ms) {
-  const d = ms - Date.now();
-  if (d <= 0) return 'ya';
-  if (d < 3600000) return 'en ' + Math.round(d / 60000) + ' min';
-  if (d < 86400000) return 'en ' + Math.round(d / 3600000) + ' h';
-  return 'en ' + Math.round(d / 86400000) + ' d';
-}
 const pausada = c => c.pausado_hasta && c.pausado_hasta > Date.now();
 // Tú tienes el control y el cliente escribió después: le debes respuesta.
 const teToca = c => pausada(c) && c.ultimo_rol === 'cliente';
@@ -220,11 +244,9 @@ async function cargar() {
 function pinta() {
   const cs = datos.conversaciones || [];
   const abiertas = cs.filter(c => !c.cerrada);
-  document.getElementById('nConv').textContent = abiertas.length;
-  document.getElementById('nLeads').textContent = abiertas.filter(c => c.lead_nombre || c.interes).length;
   const urgentes = abiertas.filter(c => c.escalado || teToca(c)).length;
-  document.getElementById('nEsc').textContent = urgentes;
-  document.getElementById('dUrge').classList.toggle('hay', urgentes > 0);
+  const nBadge = document.getElementById('navUrge');
+  if (nBadge) { nBadge.style.display = urgentes ? '' : 'none'; nBadge.textContent = urgentes; }
 
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.v === vista));
   pintaSelectorEtiquetas();
@@ -285,7 +307,7 @@ async function abrir(id) {
   abierta = id; gaveta = null; modo = 'responder';
   document.querySelectorAll('.fila').forEach(f => f.classList.toggle('sel', f.dataset.id === id));
   document.getElementById('hilo').classList.add('abierto');
-  document.body.classList.add('split');
+  document.getElementById('sec-conversaciones').classList.add('split');
   document.getElementById('msgs').innerHTML = '<div class="aviso">Cargando…</div>';
   await refrescarHilo();
 }
@@ -416,7 +438,7 @@ function cerrar() {
   abierta = null; hiloActual = null; gaveta = null;
   document.querySelectorAll('.fila.sel').forEach(f => f.classList.remove('sel'));
   document.getElementById('hilo').classList.remove('abierto');
-  document.body.classList.remove('split');
+  document.getElementById('sec-conversaciones').classList.remove('split');
   cargar();
 }
 
@@ -474,112 +496,25 @@ async function enviar() {
   await refrescarHilo(); cargar();
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('.tab').forEach(t =>
-    t.onclick = () => { vista = t.dataset.v; pinta(); });
-  document.querySelectorAll('.mtab').forEach(t =>
-    t.onclick = () => cambiaModo(t.dataset.m));
-  document.getElementById('busca').addEventListener('input', pinta);
-  document.getElementById('fEstado').addEventListener('change', e => { estado = e.target.value; pinta(); });
-  document.getElementById('fOrden').addEventListener('change', e => { orden = e.target.value; cargar(); });
-  document.getElementById('fEtiqueta').addEventListener('change', e => { etiquetaFiltro = e.target.value; pinta(); });
-  document.getElementById('txt').addEventListener('keydown', e => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviar(); }
-  });
-  cargar();
-  setInterval(() => { cargar(); refrescarHilo(); }, 12000);
-});
+
+SECCIONES.conversaciones = {
+  _listo: false,
+  init(){
+    if (!this._listo) {
+      this._listo = true;
+      document.querySelectorAll('#sec-conversaciones .tab').forEach(t =>
+        t.onclick = () => { vista = t.dataset.v; pinta(); });
+      document.querySelectorAll('.mtab').forEach(t => t.onclick = () => cambiaModo(t.dataset.m));
+      document.getElementById('busca').addEventListener('input', pinta);
+      document.getElementById('fEstado').addEventListener('change', e => { estado = e.target.value; pinta(); });
+      document.getElementById('fOrden').addEventListener('change', e => { orden = e.target.value; cargar(); });
+      document.getElementById('fEtiqueta').addEventListener('change', e => { etiquetaFiltro = e.target.value; pinta(); });
+      document.getElementById('txt').addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviar(); }
+      });
+    }
+    cargar();
+  },
+  cada(){ cargar(); refrescarHilo(); },
+};
 `;
-
-export function renderPanel() {
-  const esc = (s) => String(s ?? "").replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" })[c]);
-  return `<!doctype html><html lang="es"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#131628">
-<title>${esc(negocio.nombreNegocio)}</title>
-${marca.fuente ? `<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="${marca.fuente}">` : ""}
-<style>${CSS}</style></head><body>
-
-<div class="banda"><div class="banda-int">
-  <div class="marca">
-    <h1>${esc(negocio.nombreNegocio)}</h1>
-    <p>${esc(negocio.nombreAgente)} contesta tu WhatsApp, 24/7</p>
-  </div>
-  <div class="triaje">
-    <div class="dato"><b id="nConv">0</b><span>conversaciones</span></div>
-    <div class="dato"><b id="nLeads">0</b><span>interesados</span></div>
-    <div class="dato urge" id="dUrge"><b id="nEsc">0</b><span>te necesitan</span></div>
-  </div>
-</div></div>
-
-<main>
-  <div class="filtros">
-    <input id="busca" class="busca" type="search" placeholder="Buscar por nombre o palabra"
-           aria-label="Buscar conversaciones">
-    <div class="tabs">
-      <button class="tab on" data-v="conversaciones">Conversaciones</button>
-      <button class="tab" data-v="interesados">Interesados</button>
-    </div>
-    <div class="selects">
-      <select id="fEstado" aria-label="Qué conversaciones ver">
-        <option value="abiertas">Sin atender</option>
-        <option value="cerradas">Atendidas</option>
-        <option value="todas">Todas</option>
-      </select>
-      <select id="fOrden" aria-label="Orden">
-        <option value="reciente">Recientes primero</option>
-        <option value="antiguo">Antiguas primero</option>
-      </select>
-      <select id="fEtiqueta" aria-label="Filtrar por etiqueta" style="display:none"></select>
-    </div>
-  </div>
-  <div id="lista"></div>
-  <div id="nada">
-    <div>
-      <b>Elige una conversación</b>
-      Ábrela para leerla completa y contestar tú mismo.
-    </div>
-  </div>
-  <div id="hilo">
-    <div class="hcab">
-      <button class="volver" onclick="cerrar()" aria-label="Volver a la lista">‹</button>
-      <div class="cuerpo">
-        <div class="nom" id="hNom"></div>
-        <div class="prev" id="hSub"></div>
-      </div>
-      <button class="btn pausa" id="btnPausa" onclick="alternarPausa()">Contesto yo</button>
-    </div>
-    <div class="acciones">
-      <button class="ico" id="btnEtiquetas" onclick="abreGaveta('etiquetas')" title="Etiquetas">🏷️</button>
-      <button class="ico" id="btnRecordar" onclick="abreGaveta('recordatorio')" title="Recordármelo">⏰</button>
-      <button class="ico" id="btnCerrar" onclick="alternarCierre()" title="Marcar como atendida">✓</button>
-      <button class="ico" id="btnFicha" onclick="abreGaveta('ficha')" title="Ficha">📇</button>
-      <a class="ico" id="btnWa" target="_blank" rel="noopener" title="Abrir en WhatsApp">💬</a>
-    </div>
-    <div class="gaveta" id="gaveta" style="display:none"></div>
-    <div class="error" id="err" style="display:none"></div>
-    <div class="msgs" id="msgs"></div>
-    <div class="emojis" id="emojis" style="display:none"></div>
-    <div class="comp" id="comp">
-      <div class="modos">
-        <button class="mtab on" data-m="responder">Responder</button>
-        <button class="mtab" data-m="nota">Nota</button>
-      </div>
-      <div class="cfila">
-        <button class="ico" onclick="alternarEmojis()" title="Emojis" aria-label="Emojis">🙂</button>
-        <textarea id="txt" rows="1" placeholder="Escribe tu respuesta…" aria-label="Tu respuesta"></textarea>
-        <button id="btnEnviar" onclick="enviar()" aria-label="Enviar">➤</button>
-      </div>
-    </div>
-  </div>
-</main>
-
-<footer>
-  hecho con ${marca.url
-    ? `<a href="${esc(marca.url)}" target="_blank" rel="noopener">${esc(marca.nombre)}</a>`
-    : esc(marca.nombre)}
-</footer>
-<script>${JS}</script></body></html>`;
-}

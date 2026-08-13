@@ -1,15 +1,27 @@
 // La API del panel. Todo pasa por la clave del dueño (la valida index.js).
 
 import { responder } from "./zernio.js";
+import { negocio } from "../negocio.js";
 import {
   listarConversaciones, hiloCompleto, cambiarPausa, guardarMensaje, cambiarCierre,
   ponerRecordatorio, guardarEtiquetas, etiquetasUsadas, obtenerConversacion,
-  registrarEvento, PAUSA_INDEFINIDA,
+  registrarEvento, PAUSA_INDEFINIDA, kpis, actividadPorDia, gasto, gastoPorDia,
+  conteoEventos, leerAjustes, guardarAjuste, resumenDelDia,
 } from "./datos.js";
 
 // Cuando el dueño contesta a mano, el agente se calla solo. Si nunca reactiva,
 // vuelve al día siguiente en lugar de quedarse mudo para siempre.
+// Ajustable desde el panel (Configuración → horas_pausa_al_contestar).
 const HORAS_PAUSA_AL_CONTESTAR = 8;
+
+// Claves de ajustes que el panel puede escribir. Lista cerrada a propósito.
+const AJUSTES_PERMITIDOS = new Set([
+  "horas_pausa_al_contestar",   // cuánto se calla el agente al contestar tú
+  "minutos_pausa_escalacion",   // cuánto se calla al escalar
+  "tope_mensual_neurons",       // presupuesto: al llegar, baja al modelo suplente
+  "zona_horaria",
+  "moneda",
+]);
 
 const leerJson = async (request) => request.json().catch(() => ({}));
 
@@ -53,7 +65,9 @@ export async function apiInbox(request, env, url) {
       conversacionId: id, rol: "dueño", texto, tipo: "texto", platformMessageId: messageId,
     });
     // Contestar a mano = tomar el control. El agente no te pisa.
-    const hasta = await cambiarPausa(env, id, true, HORAS_PAUSA_AL_CONTESTAR * 60);
+    const ajustes = await leerAjustes(env);
+    const horas = Number(ajustes.horas_pausa_al_contestar) || HORAS_PAUSA_AL_CONTESTAR;
+    const hasta = await cambiarPausa(env, id, true, horas * 60);
     await registrarEvento(env, "respuesta_dueno", { conversacionId: id, messageId });
 
     return Response.json({ ok: true, messageId, pausadoHasta: hasta });
@@ -93,6 +107,66 @@ export async function apiInbox(request, env, url) {
     const { id, etiquetas } = await leerJson(request);
     const guardadas = await guardarEtiquetas(env, id, etiquetas);
     return Response.json({ ok: true, etiquetas: guardadas });
+  }
+
+  // ── Las secciones nuevas del panel ──
+
+  if (ruta === "resumen") {
+    const [k, actividad, recientes] = await Promise.all([
+      kpis(env), actividadPorDia(env, 7), listarConversaciones(env, { limite: 6 }),
+    ]);
+    return Response.json({ ...k, actividad, recientes, agente: negocio.nombreAgente });
+  }
+
+  if (ruta === "costos") {
+    const mes0 = new Date(); mes0.setDate(1); mes0.setHours(0, 0, 0, 0);
+    const [delMes, porDia, ajustes] = await Promise.all([
+      gasto(env, mes0.getTime()), gastoPorDia(env, 30), leerAjustes(env),
+    ]);
+    const diasCorridos = Math.max(1, Math.ceil((Date.now() - mes0.getTime()) / 86_400_000));
+    const diasDelMes = new Date(mes0.getFullYear(), mes0.getMonth() + 1, 0).getDate();
+    return Response.json({
+      ...delMes, porDia,
+      proyeccionNeurons: (delMes.neurons / diasCorridos) * diasDelMes,
+      topeNeurons: Number(ajustes.tope_mensual_neurons) || null,
+      freeTierDiario: 10000,
+    });
+  }
+
+  if (ruta === "flujo") {
+    const [conteos, ajustes] = await Promise.all([conteoEventos(env, 30), leerAjustes(env)]);
+    return Response.json({
+      conteos,
+      modelo: env.MODELO_CEREBRO || "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+      cerebroPropio: env.OPENAI_API_KEY ? "openai" : env.ANTHROPIC_API_KEY ? "anthropic" : null,
+      modeloOido: env.MODELO_OIDO || "@cf/openai/whisper-large-v3-turbo",
+      modeloVista: env.MODELO_VISTA || "@cf/meta/llama-3.2-11b-vision-instruct",
+      herramientas: (negocio.herramientas || []).map((h) => ({ id: h.id, tool: h.tool, para: h.para })),
+      canales: { whatsapp: !!env.ZERNIO_ACCOUNT_ID, telegramAvisos: !!env.TELEGRAM_CHAT_ID },
+      reporteCorreo: !!(env.RESEND_API_KEY && env.CORREO_DUENO),
+      minutosPausa: Number(ajustes.minutos_pausa_escalacion) || 60,
+      horasPausaContestar: Number(ajustes.horas_pausa_al_contestar) || HORAS_PAUSA_AL_CONTESTAR,
+    });
+  }
+
+  if (ruta === "ajustes") {
+    if (request.method === "POST") {
+      const cuerpo = await leerJson(request);
+      const aplicados = {};
+      for (const [k, v] of Object.entries(cuerpo || {})) {
+        if (!AJUSTES_PERMITIDOS.has(k)) continue;
+        await guardarAjuste(env, k, v);
+        aplicados[k] = v;
+      }
+      return Response.json({ ok: true, aplicados });
+    }
+    return Response.json({
+      ajustes: await leerAjustes(env),
+      permitidos: [...AJUSTES_PERMITIDOS],
+      // Lo que hoy es fijo del deploy, para mostrarlo en la pantalla:
+      zonaHoraria: env.ZONA_HORARIA || "America/Mexico_City",
+      negocio: { nombre: negocio.nombreNegocio, agente: negocio.nombreAgente, tono: negocio.tono },
+    });
   }
 
   return Response.json({ error: "Ruta desconocida" }, { status: 404 });
