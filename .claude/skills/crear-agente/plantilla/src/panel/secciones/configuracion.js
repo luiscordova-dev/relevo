@@ -124,6 +124,7 @@ SECCIONES.configuracion = {
       ['📚', 'Cargarle mi catálogo', 'Usa /cargar-conocimiento: te paso mi catálogo y quiero que mi agente Relevo conteste con él.'],
       ['🩺', 'Revisar una conversación', 'Corre /autopsia sobre esta conversación que salió mal: [pega el chat].'],
       ['🔒', 'Auditar seguridad y costos', 'Corre /auditoria en mi agente Relevo y aplica los arreglos, uno por uno.'],
+      ['🔑', 'Rotar la clave del panel', 'Rota la clave del panel de mi agente Relevo (openssl rand -hex 8 → wrangler secret put CLAVE_PANEL), pásamela por un canal seguro y confirma que las sesiones viejas ya no entran.'],
     ];
     document.getElementById('cfPrompts').innerHTML = ejemplos.map(e =>
       '<button class="cap-prompt" data-p="' + esc(e[2]) + '">' +

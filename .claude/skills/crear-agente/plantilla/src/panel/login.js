@@ -1,5 +1,7 @@
-// La puerta del panel: split-screen — la marca a la izquierda, la entrada a la
-// derecha. La clave se cambia por una cookie HMAC firmada (ver index.js).
+// La puerta del panel: split-screen. IMPORTANTE: el login lleva la marca de
+// RELEVO (el producto) — quien entra aquí es el técnico que construyó el agente.
+// El negocio del cliente final solo se menciona ("el panel de X"); SU marca vive
+// adentro, en el panel. La clave se cambia por una cookie HMAC firmada (index.js).
 
 import { negocio } from "../../negocio.js";
 
@@ -85,25 +87,26 @@ label{display:block;font-size:12.5px;font-weight:600;margin-bottom:7px}
 <div class="caja">
   <div class="lado">
     <div class="marca">
-      <div class="cuadro">${esc((negocio.nombreNegocio || "R")[0].toUpperCase())}</div>
-      <div><b>${esc(negocio.nombreNegocio)}</b><span>${esc(negocio.nombreAgente)} · agente de WhatsApp</span></div>
+      <div class="cuadro">R</div>
+      <div><b>Relevo</b><span>agentes de WhatsApp con Claude Code</span></div>
     </div>
-    <h1>Mientras no estás,<br>alguien sí contesta.</h1>
-    <p class="sub">Tus conversaciones, interesados y costos en un solo lugar — con
-    ${esc(negocio.nombreAgente)} atendiendo tu WhatsApp a toda hora.</p>
+    <h1>El relevo que contesta<br>cuando tú no puedes.</h1>
+    <p class="sub">Un agente real en tu propio Cloudflare: webhook firmado, captura con
+    evidencia, panel de operación — y se construye conversando.</p>
     <div class="stats">
-      <div class="stat"><b>24/7</b><span>en turno</span></div>
-      <div class="stat"><b>🔔</b><span>te avisa al momento</span></div>
-      <div class="stat"><b>100%</b><span>tuyo, en tu nube</span></div>
+      <div class="stat"><b>30 min</b><span>de cero a producción</span></div>
+      <div class="stat"><b>0</b><span>dependencias en runtime</span></div>
+      <div class="stat"><b>1,000+</b><span>apps vía Composio</span></div>
     </div>
-    <div class="seguro">🛡️ Conexión segura ·
+    <div class="seguro">🛡️ Sesión firmada (HMAC) ·
       <span class="atr">hecho con <a href="https://github.com/luiscordova-dev/relevo" target="_blank" rel="noopener">Relevo</a>
       · by <a href="https://instagram.com/luiscordova.ia" target="_blank" rel="noopener">Luis Córdova</a></span></div>
   </div>
 
   <div class="entrada">
     <h2>Bienvenido de vuelta</h2>
-    <p class="hola">Inicia sesión para entrar a tu panel.</p>
+    <p class="hola">Inicia sesión para entrar al panel de
+    <b style="color:var(--tinta)">${esc(negocio.nombreNegocio)}</b>.</p>
     <form id="f">
       <label for="clave">Clave del panel</label>
       <div class="campo">
@@ -115,8 +118,9 @@ label{display:block;font-size:12.5px;font-weight:600;margin-bottom:7px}
       <div class="error" id="error"></div>
       <button class="btn" id="btn" type="submit">Iniciar sesión →</button>
     </form>
-    <p class="ayuda">Tu clave te la entregó quien configuró tu agente, junto con el link
-    de este panel. ¿La perdiste? Pídele que te genere una nueva — es un minuto.</p>
+    <p class="ayuda">La clave vive en el secreto <code>CLAVE_PANEL</code> del worker.
+    ¿Se perdió? Rótala — <code>openssl rand -hex 8 | wrangler secret put CLAVE_PANEL</code> —
+    y todas las sesiones se cierran solas.</p>
   </div>
 </div>
 <script>
