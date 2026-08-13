@@ -51,11 +51,13 @@ export default {
 
       // Iniciar sesión: la clave del panel a cambio de una cookie firmada.
       if (url.pathname === "/api/login" && request.method === "POST") {
-        const { clave } = await request.json().catch(() => ({}));
+        const { clave, recordar } = await request.json().catch(() => ({}));
         if (!env.CLAVE_PANEL || !igualesConstante(String(clave || ""), env.CLAVE_PANEL)) {
           return Response.json({ ok: false, error: "Esa clave no es." }, { status: 401 });
         }
-        return Response.json({ ok: true }, { headers: { "Set-Cookie": await cookieDeSesion(env) } });
+        return Response.json({ ok: true }, {
+          headers: { "Set-Cookie": await cookieDeSesion(env, recordar !== false) },
+        });
       }
 
       if (url.pathname === "/api/logout" && request.method === "POST") {
@@ -187,10 +189,12 @@ async function tokenDeSesion(env) {
   return [...new Uint8Array(mac)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-async function cookieDeSesion(env) {
+async function cookieDeSesion(env, recordar = true) {
   const token = await tokenDeSesion(env);
-  // 30 días: el dueño entra desde su celular sin teclear la clave cada vez.
-  return `rv_sesion=${token}; Path=/; Max-Age=2592000; HttpOnly; Secure; SameSite=Lax`;
+  // "Mantener sesión iniciada": 30 días. Sin marcar: la cookie muere al cerrar
+  // el navegador (cookie de sesión, sin Max-Age).
+  const duracion = recordar ? "; Max-Age=2592000" : "";
+  return `rv_sesion=${token}; Path=/${duracion}; HttpOnly; Secure; SameSite=Lax`;
 }
 
 async function sesionOk(request, env) {

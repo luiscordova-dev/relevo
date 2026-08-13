@@ -112,7 +112,7 @@ SECCIONES.capacidades = {
         ? '<label class="sw" title="' + (c.on ? 'Apagar' : 'Encender') + '">' +
           '<input type="checkbox" data-sw="' + c.sw + '"' + (c.on ? ' checked' : '') + '><i></i></label>'
         : '<span class="cap-estado ' + (c.conecta ? 'off' : 'on') + '">' +
-          (c.conecta ? 'CONECTA' : 'DE SERIE') + '</span>';
+          (c.conecta ? 'CONECTA' : 'SIEMPRE ACTIVA') + '</span>';
 
       const pie = c.prompt
         ? '<button class="cap-prompt" data-p="' + esc(c.prompt) + '">' +
@@ -122,7 +122,7 @@ SECCIONES.capacidades = {
             (c.on ? 'ENCENDIDA' : 'APAGADA') + '</span><small>' +
             (c.on ? 'aplica en la siguiente respuesta' : 'el agente lo dice de frente, no ignora') +
             '</small></div>'
-          : '<div class="cap-pie"><small>Parte del corazón del agente — no se apaga.</small></div>');
+          : '<div class="cap-pie"><small>Incluida siempre: es la esencia del agente y no tiene interruptor.</small></div>');
 
       return '<div class="cap' + (apagada ? ' apagada' : '') + '">' +
         '<div class="cap-cab"><span class="ic">' + c.ic + '</span><b>' + c.t + '</b>' + cab + '</div>' +

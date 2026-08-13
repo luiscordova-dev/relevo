@@ -98,6 +98,28 @@ document.addEventListener('DOMContentLoaded', () => {
   latido(); setInterval(latido, 30000);
 });
 
+// ── mi cuenta: el menú ──
+const mcZona = document.querySelector('.mc-zona');
+document.getElementById('miCuenta')?.addEventListener('click', (e) => {
+  e.stopPropagation();
+  const menu = document.getElementById('mcMenu');
+  menu.hidden = !menu.hidden;
+  mcZona.classList.toggle('abierta', !menu.hidden);
+});
+document.addEventListener('click', () => {
+  const menu = document.getElementById('mcMenu');
+  if (menu && !menu.hidden) { menu.hidden = true; mcZona.classList.remove('abierta'); }
+});
+document.getElementById('mcMenu')?.addEventListener('click', (e) => {
+  // navegar o accionar sí cierra; el clic en el fondo del menú no
+  if (e.target.closest('.mc-item')) {
+    document.getElementById('mcMenu').hidden = true;
+    mcZona.classList.remove('abierta');
+  }
+  e.stopPropagation();
+});
+document.getElementById('mcTema')?.addEventListener('click', alternarTema);
+
 // ── cerrar sesión ──
 document.getElementById('btnSalir')?.addEventListener('click', async () => {
   if (!confirm('¿Cerrar la sesión en este dispositivo?')) return;

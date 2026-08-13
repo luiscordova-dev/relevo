@@ -60,6 +60,10 @@ nav{flex:1;overflow-y:auto;padding:4px 10px 10px}
        font-size:11px;color:var(--lateral-sec)}
 .pie-lateral a{color:#B98AFF;text-decoration:none;font-weight:600}
 
+/* Configuración vive dentro de Mi cuenta (como el CRM de referencia);
+   en móvil no hay Mi cuenta, así que ahí sí aparece en la barra. */
+@media(min-width:900px){ .nitem[data-sec="configuracion"]{display:none} }
+
 /* colapso de la sidebar (escritorio) */
 @media(min-width:900px){
   .shell.plegada aside{width:0;overflow:hidden;border:0}
@@ -160,18 +164,29 @@ select:hover{border-color:var(--morado)}
 .cap-prompt:hover{border-color:var(--morado);color:var(--txt)}
 .cap-prompt b{color:var(--morado);font-size:10.5px;letter-spacing:.05em;display:block;margin-bottom:3px}
 
-/* mi cuenta (sidebar) */
-.mi-cuenta{display:flex;align-items:center;gap:10px;margin:0 10px 8px;padding:10px 12px;
-  border:1px solid var(--lateral-linea);border-radius:14px}
+/* mi cuenta (sidebar): abre su menú con Configuración, tema y salir */
+.mc-zona{position:relative;margin:0 10px 8px}
+.mi-cuenta{display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;
+  border:1px solid var(--lateral-linea);border-radius:14px;background:none;
+  color:var(--lateral-txt);cursor:pointer;font:inherit;text-align:left;
+  transition:border-color .14s}
+.mi-cuenta:hover{border-color:var(--lateral-sec)}
+.mc-flecha{margin-left:auto;color:var(--lateral-sec);font-size:13px;transition:transform .15s}
+.mc-zona.abierta .mc-flecha{transform:rotate(180deg)}
+.mc-menu{position:absolute;bottom:calc(100% + 8px);left:0;right:0;z-index:35;
+  background:var(--lateral);border:1px solid var(--lateral-linea);border-radius:14px;
+  padding:6px;box-shadow:0 -8px 28px rgba(0,0,0,.35);display:flex;flex-direction:column;gap:2px}
+.mc-menu[hidden]{display:none}
+.mc-item{display:flex;align-items:center;gap:9px;width:100%;padding:9px 11px;border:0;
+  border-radius:10px;background:none;color:var(--lateral-txt);cursor:pointer;font:inherit;
+  font-size:13px;text-align:left;text-decoration:none;transition:background .12s}
+.mc-item:hover{background:var(--lateral-linea)}
+.mc-item.peligro{color:#ff9d9d}
 .mc-avatar{width:32px;height:32px;border-radius:50%;background:var(--lateral-activo);
   color:#fff;display:grid;place-items:center;font-weight:800;font-size:13px;flex:none}
 .mc-texto{min-width:0;flex:1}
 .mc-texto b{display:block;font-size:12.5px;letter-spacing:-.1px}
 .mc-texto span{font-size:10.5px;color:var(--lateral-sec)}
-.mc-salir{border:1px solid var(--lateral-linea);background:none;color:var(--lateral-sec);
-  font:inherit;font-size:11px;font-weight:600;border-radius:9px;padding:5px 10px;
-  cursor:pointer;transition:color .14s,border-color .14s}
-.mc-salir:hover{color:#fff;border-color:#fff}
 
 /* barras de actividad */
 .barras{display:flex;gap:8px;align-items:flex-end;height:120px;padding-top:8px}
@@ -187,7 +202,7 @@ select:hover{border-color:var(--morado)}
   .shell{flex-direction:column}
   aside{width:100%;height:auto;position:fixed;bottom:0;top:auto;z-index:30;
         flex-direction:row;align-items:center;border-top:1px solid var(--lateral-linea)}
-  .logo,.ngrupo,.pie-lateral,.mi-cuenta{display:none}
+  .logo,.ngrupo,.pie-lateral,.mc-zona{display:none}
   nav{display:flex;flex:1;padding:6px;overflow-x:auto;overflow-y:hidden}
   .nitem{flex:1;flex-direction:column;gap:3px;font-size:9px;padding:7px 3px;min-width:62px}
   /* 7+ secciones: la etiqueta se corta con puntos en vez de encimarse con la vecina */

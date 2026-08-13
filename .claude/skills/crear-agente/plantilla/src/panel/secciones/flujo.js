@@ -32,6 +32,9 @@ export const HTML = `
 
 export const CSS = `
 .f-scrim{position:fixed;inset:0;background:rgba(19,22,40,.35);z-index:40}
+/* display:flex le gana al hidden del navegador: hay que decirlo explícito.
+   (Este bug ya mordió dos veces — si agregas un panel con display propio, repítelo.) */
+.f-drawer[hidden],.f-scrim[hidden]{display:none}
 .f-drawer{position:fixed;top:0;right:0;bottom:0;width:min(400px,92vw);z-index:41;color:var(--txt);
   background:var(--tarjeta);border-left:1px solid var(--borde);box-shadow:-16px 0 48px rgba(19,22,40,.18);
   display:flex;flex-direction:column;animation:f-entra .18s ease}

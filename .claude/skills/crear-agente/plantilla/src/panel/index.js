@@ -74,10 +74,17 @@ ${cssSecciones}</style></head><body>
       <span>${esc(negocio.nombreAgente)} · en turno</span></div>
     </div>
     <nav>${nav}</nav>
-    <div class="mi-cuenta" id="miCuenta">
-      <div class="mc-avatar">${esc((negocio.nombreNegocio || "R")[0].toUpperCase())}</div>
-      <div class="mc-texto"><b>Mi cuenta</b><span>sesión iniciada</span></div>
-      <button class="mc-salir" id="btnSalir" title="Cerrar sesión">Salir</button>
+    <div class="mc-zona">
+      <div class="mc-menu" id="mcMenu" hidden>
+        <a class="mc-item" href="#/configuracion" id="mcConfig">⚙️ <span>Configuración</span></a>
+        <button class="mc-item" id="mcTema">🌙 <span>Modo oscuro</span></button>
+        <button class="mc-item peligro" id="btnSalir">↪ <span>Cerrar sesión</span></button>
+      </div>
+      <button class="mi-cuenta" id="miCuenta" aria-haspopup="true">
+        <div class="mc-avatar">${esc((negocio.nombreNegocio || "R")[0].toUpperCase())}</div>
+        <div class="mc-texto"><b>Mi cuenta</b><span>sesión iniciada</span></div>
+        <span class="mc-flecha">⌄</span>
+      </button>
     </div>
     <div class="pie-lateral">${ATRIBUCION}</div>
   </aside>
