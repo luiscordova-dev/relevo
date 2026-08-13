@@ -41,7 +41,8 @@ body{
 .stat b{display:block;font-family:Fraunces,Georgia,serif;font-size:25px;font-weight:600}
 .stat span{font-size:11px;color:rgba(255,255,255,.55)}
 .seguro{margin-top:auto;padding-top:28px;font-size:11.5px;color:rgba(255,255,255,.5);
-  display:flex;align-items:center;gap:7px}
+  display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.seguro .atr a{color:rgba(255,255,255,.75);text-decoration:none;font-weight:600}
 
 /* ── la entrada ── */
 .entrada{flex:1;background:var(--blanco);color:var(--tinta);padding:44px 42px;
@@ -92,10 +93,12 @@ label{display:block;font-size:12.5px;font-weight:600;margin-bottom:7px}
     ${esc(negocio.nombreAgente)} atendiendo tu WhatsApp a toda hora.</p>
     <div class="stats">
       <div class="stat"><b>24/7</b><span>en turno</span></div>
-      <div class="stat"><b>HMAC</b><span>webhook firmado</span></div>
-      <div class="stat"><b>0</b><span>claves en la URL</span></div>
+      <div class="stat"><b>🔔</b><span>te avisa al momento</span></div>
+      <div class="stat"><b>100%</b><span>tuyo, en tu nube</span></div>
     </div>
-    <div class="seguro">🛡️ Conexión segura · sesión firmada</div>
+    <div class="seguro">🛡️ Conexión segura ·
+      <span class="atr">hecho con <a href="https://github.com/luiscordova-dev/relevo" target="_blank" rel="noopener">Relevo</a>
+      · by <a href="https://instagram.com/luiscordova.ia" target="_blank" rel="noopener">Luis Córdova</a></span></div>
   </div>
 
   <div class="entrada">
@@ -112,8 +115,8 @@ label{display:block;font-size:12.5px;font-weight:600;margin-bottom:7px}
       <div class="error" id="error"></div>
       <button class="btn" id="btn" type="submit">Iniciar sesión →</button>
     </form>
-    <p class="ayuda">¿No tienes la clave? Quien configuró el agente la tiene. Se rota con
-    <code>wrangler secret put CLAVE_PANEL</code> — al rotarla, todas las sesiones se cierran.</p>
+    <p class="ayuda">Tu clave te la entregó quien configuró tu agente, junto con el link
+    de este panel. ¿La perdiste? Pídele que te genere una nueva — es un minuto.</p>
   </div>
 </div>
 <script>
