@@ -9,6 +9,11 @@ Regla de la casa: **una conexión no está lista cuando se configuró — está 
 probó.** Cada camino de esta skill termina ejecutando la conexión de verdad y enseñando el
 resultado (el evento en el calendario, la fila en el Sheet, el mensaje en Slack).
 
+## ⛔ Si vino por su NÚMERO de WhatsApp, esta no es la skill
+*"Quiero conectar mi propio número"*, *"quiero atender clientes de verdad"*, *"salir del
+número de prueba"* → eso es **`/crear-agente`, Fase 9** (guiada y soportada), no esto.
+Mándalo para allá y no sigas: aquí se conectan *apps* y *otros canales*, no el número.
+
 ## Antes de nada: ¿qué quiere lograr?
 No preguntes "¿quieres Composio?". Pregunta **qué quiere que haga su agente** y tú eliges
 el camino:
