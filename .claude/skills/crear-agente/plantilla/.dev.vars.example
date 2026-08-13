@@ -1,0 +1,46 @@
+# ─────────────────────────────────────────────────────────────────────────────
+#  LAS LLAVES DE TU AGENTE — archivo de EJEMPLO (este sí va al repo)
+#
+#  Regla de oro: en producción los secretos NUNCA viven en archivos.
+#  Se guardan en Cloudflare, uno por uno:
+#
+#      echo -n "el-valor" | npx wrangler secret put NOMBRE_DEL_SECRETO
+#
+#  ¿Entonces para qué existe este archivo?
+#  1. Es el inventario completo de qué llave necesita cada cosa (y cuáles no).
+#  2. Si desarrollas en local con `wrangler dev`, copia esto a `.dev.vars`
+#     (ese archivo git lo IGNORA) y pon ahí tus valores de prueba.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── NIVEL 1 · obligatorias (sin estas el agente no arranca) ─────────────────
+
+# WhatsApp vía Zernio. Se crea con: zernio apikeys:create
+ZERNIO_API_KEY="zrn_..."
+
+# La firma de los webhooks. Te la da Zernio al registrar el webhook.
+ZERNIO_WEBHOOK_SECRET="..."
+
+# Tu bot de avisos (créalo con @BotFather) y tu chat (te lo dice @userinfobot).
+TELEGRAM_BOT_TOKEN="123456:ABC..."
+TELEGRAM_CHAT_ID="123456789"
+
+# La clave de tu panel. Genérala: openssl rand -hex 8
+CLAVE_PANEL="..."
+
+# ── NIVEL 2 · opcionales (el agente funciona igual sin ellas) ───────────────
+
+# Herramientas (agendar, Notion, Slack…) y reporte por Gmail.
+# Es la API key del DASHBOARD de Composio (empieza con ak_). ⚠️ La del CLI
+# (uak_) NO sirve para el agente.
+# COMPOSIO_API_KEY="ak_..."
+
+# A qué correo llega el reporte diario.
+# CORREO_DUENO="tu@correo.com"
+
+# Alternativa a Gmail para el reporte (resend.com).
+# RESEND_API_KEY="re_..."
+
+# Tu propia IA en vez de la incluida (una de las dos, no ambas).
+# OPENAI_API_KEY="sk-..."
+# ANTHROPIC_API_KEY="sk-ant-..."
+# MODELO_PROPIO="gpt-4.1-mini"

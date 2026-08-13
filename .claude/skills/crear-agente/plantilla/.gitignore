@@ -1,4 +1,11 @@
 node_modules/
 .wrangler/
-.dev.vars
 *.log
+.DS_Store
+
+# Secretos: NUNCA al repo. El inventario de qué va aquí está en .dev.vars.example
+.dev.vars
+.secretos.local
+.env
+.env.*
+!.env.example

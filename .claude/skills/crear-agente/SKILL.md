@@ -192,7 +192,9 @@ Si algo no funcionó, `referencias/fallos.md` y arréglalo tú.
 El agente ya está completo: contesta, no inventa, captura, avisa, oye, ve, y tiene su
 panel. **Aquí puedes parar y está perfecto.** Pero ofrécele el menú, una sola vez:
 
-> Tu agente ya trabaja. ¿Quieres llevarlo al siguiente nivel? Te guío paso a paso —
+> Tu agente ya trabaja. ¿Quieres llevarlo al siguiente nivel? (Está en beta abierta:
+> el código ya funciona y está probado, y la experiencia guiada se está puliendo — si
+> algo se atora, dímelo y lo resolvemos juntos.) Te guío paso a paso —
 > cada mejora son unos minutos y terminan probadas, no prometidas:
 >
 > 1. 🗓️ **Que HAGA cosas, no solo conteste** — agendar en tu Google Calendar, escribir

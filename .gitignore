@@ -2,7 +2,12 @@ node_modules/
 .wrangler/
 .dev.vars
 .secretos.local
+.env
+.env.*
+!.env.example
 .progreso.json
 *.log
 .DS_Store
 SIGUIENTE.md
+# El lead magnet de Luis: se distribuye por su funnel, no por el repo
+GUIA-DE-INSTALACION.md

@@ -50,15 +50,19 @@ claude
 
 ## Qué hace el agente — en dos niveles
 
-**Nivel 1 · Lo que sale de fábrica** (los 30 minutos; solo Cloudflare + Zernio + Telegram):
+**Nivel 1 · Lo que sale de fábrica** — ✅ **listo**
+(los 30 minutos; solo Cloudflare + Zernio + Telegram):
 contesta 24/7 con la información del negocio · entiende **notas de voz** (Whisper) y
 **fotos** (Llama Vision) · **no inventa** — si no sabe, lo dice y captura · captura leads
 y **avisa por Telegram al momento** · escala a humano cuando lo piden o hay queja (y se
 calla para que entres tú) · panel de operación con inbox, toma de control, etiquetas,
 recordatorios y notas privadas.
 
-**Nivel 2 · El siguiente nivel** (opcional; cada mejora es una conversación con su skill,
-y termina probada, no prometida):
+**Nivel 2 · El siguiente nivel** — 🚧 **beta abierta**
+(opcional; cada mejora es una conversación con su skill, y termina probada, no prometida.
+El código ya funciona — está verificado con citas reales en Google Calendar y correos
+reales por Gmail — y la experiencia guiada desde cero se está puliendo ahora mismo: se
+termina esta misma semana. Si algo te muerde, abre un issue y se arregla rápido):
 - 🗓️ **Que HAGA cosas** — agenda en Google Calendar, escribe en Notion, avisa a Slack
   (1,000+ apps vía Composio). El agente consulta huecos ANTES de ofrecer, y una guarda en
   código verifica que jamás diga "ya quedó agendado" sin haberlo hecho
