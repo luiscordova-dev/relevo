@@ -12,7 +12,7 @@ genera el agente, lo despliega en tu Cloudflare y **no te dice "listo" hasta que
 pruebas pasan con evidencia** — incluido el aviso de Telegram confirmado con `message_id`.
 
 ```bash
-git clone https://github.com/luiscordova/relevo.git
+git clone https://github.com/luiscordova-dev/relevo.git
 cd relevo
 claude
 # → /crear-agente
