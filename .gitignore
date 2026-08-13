@@ -5,3 +5,4 @@ node_modules/
 .progreso.json
 *.log
 .DS_Store
+SIGUIENTE.md
