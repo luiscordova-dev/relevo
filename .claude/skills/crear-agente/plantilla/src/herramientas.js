@@ -66,6 +66,19 @@ export async function ejecutar(env, { id, datos }, usuario) {
     return { ok: false, error: `El agente pidió "${id}", que no está en su lista de herramientas.` };
   }
 
+  // Capacidades locales: tool "local:<nombre>" enruta a src/capacidades.js
+  // (funciones propias del negocio, sin Composio). Las agrega /agregar-capacidad.
+  if (String(config.tool).startsWith("local:")) {
+    try {
+      const { capacidades } = await import("./capacidades.js");
+      const fn = capacidades?.[config.tool.slice(6)];
+      if (!fn) return { ok: false, error: `No existe la capacidad "${config.tool}".` };
+      return await fn(env, { ...(config.fijos || {}), ...datos }, usuario);
+    } catch (e) {
+      return { ok: false, error: String(e.message || e) };
+    }
+  }
+
   try {
     const r = await fetch(`${API}/tools/execute/${encodeURIComponent(config.tool)}`, {
       method: "POST",
