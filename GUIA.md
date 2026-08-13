@@ -1,7 +1,7 @@
-# Guía paso a paso
+# Guía del panel — para el dueño del negocio
 
-Para alguien que nunca ha programado. Si en algún punto te atoras, vuelve a Claude Code y
-cuéntale qué pasó: sabe qué hacer.
+*(Si tú eres quien construyó el agente, esto no es para ti: es la guía que le entregas a
+tu cliente junto con su panel. Si construyes, tu punto de partida es el [README](README.md).)*
 
 **Lo que vas a lograr:** en unos 30 minutos le vas a escribir a un número de WhatsApp desde
 tu propio celular, tu agente te va a contestar con la información de tu negocio, y cuando

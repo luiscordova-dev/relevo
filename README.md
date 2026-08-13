@@ -1,96 +1,73 @@
-# Contesta
+# Relevo
 
-**Tu WhatsApp atendido 24/7, con la información de tu negocio. En 30 minutos.**
+**De cero a un agente de WhatsApp en producción, en 30 minutos.**
 
-No necesitas saber programar. Describes tu negocio en español y Claude Code te construye
-un agente que contesta a tus clientes, **captura a los interesados y te avisa a tu Telegram**
-en cuanto alguien quiere comprar.
+Un agente real, no un eco de API: webhook firmado con HMAC, transcripción de notas de voz,
+visión, captura de leads con evidencia de entrega, escalación a humano, herramientas vía
+Composio, evals propias con **auto-reparación de modelo**, panel de operación incluido y
+medición de costo exacta al neuron. **Cero dependencias de npm en el runtime.**
 
-> **Lo que necesitas:** 2 cuentas gratis · **cero tarjetas** · 30 minutos
-> *(Ningún paso de este kit te va a pedir una tarjeta. Si alguno lo hace, es un error.)*
-
----
-
-## Empieza aquí
+Lo construyes conversando: una skill de Claude Code te entrevista sobre el negocio,
+genera el agente, lo despliega en tu Cloudflare y **no te dice "listo" hasta que sus 8
+pruebas pasan con evidencia** — incluido el aviso de Telegram confirmado con `message_id`.
 
 ```bash
-git clone https://github.com/USUARIO/contesta.git
-cd contesta
+git clone https://github.com/USUARIO/relevo.git
+cd relevo
 claude
+# → /crear-agente
 ```
 
-Ya dentro de Claude Code, escribe:
-
-```
-/crear-agente
-```
-
-Eso es todo. A partir de ahí solo contestas preguntas sobre tu negocio.
-
-📺 **[Ver el video paso a paso](#)** — 21 minutos, de cero a tu agente contestando.
+> **La letra chica, de frente:** en 30 minutos está en producción y contestando con la
+> información que le diste. Dejarlo fino para clientes reales pide lo de siempre: probarlo
+> como cliente, completar su información y correr `/afinar` la primera semana. Los kits que
+> prometen "listo al 100% sin tocar nada" es exactamente lo que esto no es.
 
 ---
 
-## Qué hace tu agente
+## Por qué está mejor hecho que el promedio
 
 | | |
 |---|---|
-| 💬 **Contesta 24/7** | Con la información de tu negocio. Vive en internet, no en tu compu. |
-| 🎙️ **Entiende notas de voz** | Tus clientes mandan audios. Tu agente los escucha y responde a lo que dijeron. |
-| 👁️ **Ve fotos** | Le mandan una foto de un producto o una lista de precios y la entiende. |
-| 🛡️ **Nunca inventa** | Si no sabe algo, lo dice y toma los datos. No se inventa precios ni promesas. |
-| 🔔 **Captura interesados** | Cuando alguien muestra interés real, consigue su nombre y qué quiere. |
-| 📲 **Te avisa a Telegram** | En el momento. Con su nombre, su teléfono y un botón para contestarle. |
-| 🙋 **Te pasa el chat** | Si piden una persona o se quejan, te avisa y se calla para que entres tú. |
-| 📥 **Tu bandeja de entrada** | Todas las conversaciones desde tu celular. Puedes tomar el control y contestar tú. |
+| **La captura no depende de tool-calling** | El modelo emite un bloque estructurado; un parser determinista (con rescate por regex) ejecuta el guardado y el aviso. Menos magia, cero avisos fantasma |
+| **Evidencia, no fe** | Un aviso "enviado" sin `message_id` de Telegram cuenta como NO entregado, y el panel lo marca. Si el aviso falla, el lead se guarda igual |
+| **Evals con auto-reparación** | El agente corre 6 escenarios contra sí mismo; si su modelo no da el ancho, prueba el suplente y devuelve una acción aplicable (`cambiar-modelo` / `revisar-informacion` / `usar-llave-propia`) |
+| **Seguridad de serie** | Firma HMAC del webhook validada en tiempo constante, filtro por cuenta (los webhooks de Zernio son account-wide), idempotencia por `platformMessageId`, secretos fuera del código |
+| **Costo exacto, no estimado** | Workers AI devuelve `neurons` por llamada y todo se registra. Una conversación típica: ~$0.004 USD. Con llave propia (OpenAI/Anthropic) se registran tokens y se marca como estimado |
+| **Un solo Worker** | Agente + panel + API + cron en un deploy. Sin build, sin `node_modules`. El panel se modifica pidiéndoselo a Claude en español |
 
-## Qué NO hace
+## Las skills — operan sobre el agente desplegado, no sobre teoría
 
-**No agenda citas. No cobra. No persigue clientes por su cuenta.**
+| Skill | Qué hace |
+|---|---|
+| `/crear-agente` | La entrevista → genera → despliega → **prueba con evidencia**. CLI-first: nadie copia API keys a mano |
+| `/autopsia` | Pegas un chat que salió mal → lo busca en la D1 real → reconstruye el turno → causa raíz → arreglo mínimo → re-verifica |
+| `/auditoria` | Semáforo de seguridad (llaves en código, firma, secretos) y de costos (neurons reales, modelo correcto, picos) |
+| `/afinar` | Lee las conversaciones reales, encuentra lo que no supo contestar, propone el arreglo con antes/después. Los datos los pones tú: ni el mantenimiento inventa |
+| `/conectar` | Composio de cero a **probado**: la conexión no está lista cuando se configuró, sino cuando el evento apareció en tu calendario real |
+| `/agregar-capacidad` | Describes la capacidad en español; la escribe con el molde `local:`, le escribe su prueba y verifica que nada más se rompió |
 
-Es a propósito: hace pocas cosas y las hace bien. Contesta, captura y te avisa. Si después
-quieres agregarle algo, se lo pides a Claude en español.
+## Qué hace el agente
 
----
+Contesta 24/7 con la información del negocio · entiende **notas de voz** (Whisper) y
+**fotos** (Llama Vision) · **no inventa** — si no sabe, lo dice y captura · captura leads
+y **avisa por Telegram al momento** · escala a humano cuando lo piden o hay queja (y se
+calla para que entres tú) · ejecuta herramientas de Composio (agenda, CRM, Slack, 1000+
+apps) · panel de operación con inbox, toma de control, etiquetas, recordatorios y notas
+privadas · reporte diario por correo.
 
-## Preguntas frecuentes
+## Stack
 
-**¿De verdad no necesito saber programar?**
-No. Tú describes tu negocio; Claude Code escribe, publica y prueba todo. Nunca vas a
-escribir un comando ni abrir un archivo de código.
+**Cloudflare Workers** (runtime) · **Workers AI** — Llama 3.3 70B por default, elegido por
+bake-off contra 4 modelos, con GPT-OSS-120B de suplente y BYOK opcional (OpenAI/Anthropic)
+· **D1** (datos) · **Zernio** (WhatsApp — sandbox gratis para arrancar, tu número para
+producción) · **Telegram** (avisos) · **Composio** (herramientas) · **Resend** (reporte
+diario, opcional).
 
-**¿Cuánto cuesta?**
-Nada. El agente vive en el plan gratis de Cloudflare y usa la inteligencia artificial que
-viene incluida ahí. El número de WhatsApp de prueba también es gratis.
-
-**¿Puedo usarlo con mis clientes de verdad?**
-El número que te da el kit es de prueba: sirve para que veas tu agente funcionando (50
-mensajes al día, un teléfono). Para atender clientes reales le conectas tu propio número
-de WhatsApp — [aquí te explicamos cómo](docs/ir-a-produccion.md).
-
-**¿Cómo le cambio cosas después?**
-Le hablas normal: *"sube el precio del corte a $300"*, *"que el agente sea más formal"*,
-*"agrega que cerramos el 25 de diciembre"*. [Más ideas](docs/personalizar.md).
-
-**¿Mis datos de quién son?**
-Tuyos. El agente vive en **tu** cuenta de Cloudflare, con **tus** llaves. Nadie más los ve.
-
-**¿Y si me atoro?**
-Vuelve a Claude Code y dile qué pasó. El kit trae los tropiezos comunes ya mapeados, con
-la solución de cada uno.
-
----
-
-## Para quien le interese lo técnico
-
-- **[Cómo funciona por dentro](docs/como-funciona.md)** — la arquitectura en una página
-- **[Personalizar tu agente](docs/personalizar.md)** — qué pedirle a Claude
-- **[Pasar a producción](docs/ir-a-produccion.md)** — tu propio número de WhatsApp
-
-Corre en un Cloudflare Worker (JavaScript, sin dependencias), con D1 para tus datos y los
-modelos incluidos de Workers AI. El WhatsApp entra por Zernio y los avisos salen por
-Telegram. Todo el código que se genera es tuyo y está en tu carpeta.
+- **[Cómo funciona por dentro](docs/como-funciona.md)** — arquitectura y decisiones
+- **[Personalizar](docs/personalizar.md)** · **[Ir a producción](docs/ir-a-produccion.md)**
+- **[Guía para tu cliente](GUIA.md)** — si entregas el agente a alguien no técnico, esta es su guía
 
 ## Licencia
 
-MIT — úsalo como quieras, para lo que quieras. Ver [LICENSE](LICENSE).
+MIT. Úsalo, véndelo, hazlo tuyo.

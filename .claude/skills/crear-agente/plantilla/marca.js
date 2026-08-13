@@ -5,8 +5,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const marca = {
-  nombre: "PENDIENTE",           // ← el nombre que va en "hecho con ___"
-  url: "",                        // ← a dónde lleva (vacío = solo texto, sin link)
+  nombre: "Relevo",
+  url: "",                        // ← el link del pie (tu repo o tu página; vacío = solo texto)
   // La tipografía se carga de Google Fonts. Si algún día no carga, el panel
   // usa la del sistema y se ve bien igual.
   fuente: "https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap",
