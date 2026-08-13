@@ -74,6 +74,11 @@ ${cssSecciones}</style></head><body>
       <span>${esc(negocio.nombreAgente)} · en turno</span></div>
     </div>
     <nav>${nav}</nav>
+    <div class="mi-cuenta" id="miCuenta">
+      <div class="mc-avatar">${esc((negocio.nombreNegocio || "R")[0].toUpperCase())}</div>
+      <div class="mc-texto"><b>Mi cuenta</b><span>sesión iniciada</span></div>
+      <button class="mc-salir" id="btnSalir" title="Cerrar sesión">Salir</button>
+    </div>
     <div class="pie-lateral">${ATRIBUCION}</div>
   </aside>
 

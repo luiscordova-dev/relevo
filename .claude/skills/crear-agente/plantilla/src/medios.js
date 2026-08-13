@@ -46,13 +46,21 @@ export async function ver(env, url, conversacionId) {
  * Convierte el mensaje que llegó en texto para el cerebro.
  * Devuelve { texto, tipo }. Si un medio falla, el agente sigue vivo y lo dice.
  */
-export async function interpretarMensaje(env, mensaje, conversacionId) {
+export async function interpretarMensaje(env, mensaje, conversacionId, capacidades = {}) {
   const adjunto = (mensaje.attachments || [])[0];
   const texto = (mensaje.text || "").trim();
+  // Los switches del panel. Sin valor = encendido (el default de fábrica).
+  const oidoOn = capacidades.oido !== false;
+  const vistaOn = capacidades.vista !== false;
 
   if (!adjunto) return { texto, tipo: "texto" };
 
   if (adjunto.type === "audio" || adjunto.type === "voice") {
+    if (!oidoOn) {
+      // Apagado a propósito: el cerebro lo sabe y le pide al cliente que escriba.
+      return { texto: "[El cliente mandó una nota de voz, pero la transcripción está " +
+        "apagada. Pídele con amabilidad que lo escriba.]", tipo: "audio" };
+    }
     try {
       const dicho = await escuchar(env, adjunto.url, conversacionId);
       return { texto: texto ? `${dicho}\n\n${texto}` : dicho, tipo: "audio" };
@@ -66,6 +74,10 @@ export async function interpretarMensaje(env, mensaje, conversacionId) {
   }
 
   if (adjunto.type === "image") {
+    if (!vistaOn) {
+      return { texto: "[El cliente mandó una foto, pero la visión está apagada. " +
+        "Pídele con amabilidad que te lo cuente con palabras.]", tipo: "imagen" };
+    }
     try {
       const visto = await ver(env, adjunto.url, conversacionId);
       const desc = `[El cliente mandó una foto. Se ve: ${visto}]`;

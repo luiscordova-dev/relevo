@@ -370,3 +370,20 @@ export async function marcarIndexado(env, id, trozos) {
 export async function borrarDocumento(env, id) {
   await env.DB.prepare("DELETE FROM documentos WHERE id = ?").bind(id).run();
 }
+
+// ── Capacidades encendibles desde el panel ───────────────────────────────────
+// Cada una es una llave en `ajustes` (cap_oido, cap_vista, …). Sin valor = ON:
+// el agente sale de fábrica completo y el switch solo APAGA.
+
+export const CAPACIDADES_APAGABLES = [
+  "cap_oido", "cap_vista", "cap_herramientas", "cap_conocimiento",
+  "cap_recordatorios", "cap_reporte",
+];
+
+export const capacidadOn = (ajustes, clave) => String(ajustes?.[clave] ?? "1") !== "0";
+
+/** Lee los ajustes UNA vez por petición y déjalos a la mano para los gates. */
+export async function cargarAjustes(env) {
+  if (!env.AJUSTES) env.AJUSTES = await leerAjustes(env);
+  return env.AJUSTES;
+}

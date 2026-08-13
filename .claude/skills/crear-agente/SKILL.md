@@ -178,7 +178,7 @@ Nunca le pases la lista técnica cruda. Tradúcela:
 > Deberías recibir **dos avisos en tu Telegram**: 🔔 cuando das tu nombre y 🔴 cuando pides
 > un humano. Cuéntame qué pasó.
 
-Mientras espera, pásale el link de su panel: `https://<url>/panel?clave=<clave>`.
+Mientras espera, pásale el link de su panel: `https://<url>/panel?clave=<clave>` — al abrirlo, la sesión queda iniciada y la clave desaparece de la barra. Desde entonces entra por `https://<url>/panel` con su clave (pantalla de inicio de sesión), y cierra sesión en **Mi cuenta → Salir**. Rotar la clave cierra todas las sesiones.
 Dile que lo guarde en la pantalla de inicio de su celular, y qué encuentra ahí:
 todas sus conversaciones, quién se interesó, y que **puede tomar el control y contestar él
 mismo** — al hacerlo, el agente se calla en ese chat hasta que lo reactive.

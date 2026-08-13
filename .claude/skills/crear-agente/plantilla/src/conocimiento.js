@@ -33,6 +33,7 @@ export const infoEsGrande = () => bytes(negocio.informacion) > UMBRAL_BYTES;
  */
 export async function ragActivo(env) {
   if (!ragDisponible(env)) return false;
+  if (env.AJUSTES && String(env.AJUSTES.cap_conocimiento ?? "1") === "0") return false;
   if (infoEsGrande()) return true;
   const r = await env.DB.prepare("SELECT COUNT(*) n FROM documentos").first().catch(() => null);
   return (r?.n || 0) > 0;
@@ -197,6 +198,7 @@ export async function borrarDelIndice(env, id, cuantos = 0) {
  */
 export async function buscarFragmentos(env, pregunta, k = 4) {
   if (!ragDisponible(env) || !String(pregunta || "").trim()) return [];
+  if (String(env.AJUSTES?.cap_conocimiento ?? "1") === "0") return [];
   try {
     const [vector] = await embeber(env, [String(pregunta).slice(0, 1000)]);
     if (!vector) return [];

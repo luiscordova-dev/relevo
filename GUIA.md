@@ -152,7 +152,15 @@ cuando pediste un humano.
 Claude te va a dar un link como este:
 
 ```
-https://tu-negocio.workers.dev/panel?clave=xxxxx
+https://tu-negocio.workers.dev/panel
+```
+
+La primera vez te pide tu clave (te la dio quien configuró el agente). Después de
+entrar, la sesión queda iniciada en tu dispositivo — no la tecleas cada vez. Para
+salir, abajo a la izquierda: **Mi cuenta → Salir**.
+
+```
+
 ```
 
 Ábrelo en tu celular y **guárdalo en la pantalla de inicio**. Ahí tienes:

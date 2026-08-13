@@ -6,7 +6,7 @@
 // La primera que esté configurada gana.
 
 import { negocio } from "../negocio.js";
-import { resumenDelDia, registrarEvento, recordatoriosVencidos, ponerRecordatorio } from "./datos.js";
+import { resumenDelDia, registrarEvento, recordatoriosVencidos, ponerRecordatorio, cargarAjustes, capacidadOn } from "./datos.js";
 import { avisarTexto } from "./avisos.js";
 import { composioListo, ejecutarComposio } from "./composio.js";
 
@@ -15,6 +15,7 @@ import { composioListo, ejecutarComposio } from "./composio.js";
  * Corre en cada tick del cron.
  */
 export async function dispararRecordatorios(env) {
+  if (!capacidadOn(await cargarAjustes(env), "cap_recordatorios")) return 0;
   const pendientes = await recordatoriosVencidos(env);
   let enviados = 0;
   for (const c of pendientes) {
@@ -43,6 +44,9 @@ export function viaDelReporte(env) {
 }
 
 export async function enviarReporteDiario(env) {
+  if (!capacidadOn(await cargarAjustes(env), "cap_reporte")) {
+    return { enviado: false, motivo: "El reporte está apagado desde el panel (Capacidades)." };
+  }
   const { via, motivo } = viaDelReporte(env);
   if (!via) return { enviado: false, motivo: `Reporte por correo no configurado (es opcional). ${motivo}` };
 

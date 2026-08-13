@@ -2,6 +2,9 @@
 
 export const APP = String.raw`
 const CLAVE = new URLSearchParams(location.search).get('clave') || '';
+// La cookie de sesión ya quedó sembrada por el servidor: la clave no tiene por
+// qué seguir en la barra del navegador (ni en un pantallazo, ni en el historial).
+if (CLAVE) history.replaceState(null, '', location.pathname + location.hash);
 const api = (r, o) => fetch('/api/' + r + (r.includes('?') ? '&' : '?') + 'clave=' + encodeURIComponent(CLAVE), o)
   .then(x => x.json());
 const post = (r, datos) => api(r, {
@@ -93,5 +96,12 @@ document.addEventListener('DOMContentLoaded', () => {
   addEventListener('hashchange', navegar);
   navegar();
   latido(); setInterval(latido, 30000);
+});
+
+// ── cerrar sesión ──
+document.getElementById('btnSalir')?.addEventListener('click', async () => {
+  if (!confirm('¿Cerrar la sesión en este dispositivo?')) return;
+  await fetch('/api/logout', { method: 'POST' }).catch(() => {});
+  location.replace('/panel');
 });
 `;

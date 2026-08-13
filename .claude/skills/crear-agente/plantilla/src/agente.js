@@ -11,6 +11,7 @@ import { avisarLead, avisarEscalacion } from "./avisos.js";
 import {
   obtenerConversacion, estaPausada, pausar, guardarMensaje, historial,
   guardarLead, leadDeConversacion, registrarEvento, nombreUtil, leerAjustes,
+  cargarAjustes, capacidadOn,
 } from "./datos.js";
 
 const MINUTOS_PAUSA = 60;   // el default; el panel puede cambiarlo sin redesplegar
@@ -32,8 +33,15 @@ export async function atender(env, { mensaje, conversacion: conv }) {
   const nombreWa = conv.participantName || mensaje.sender?.name || null;
   const registro = await obtenerConversacion(env, conv.id, telefono, nombreWa);
 
+  const ajustes = await cargarAjustes(env);
+
   // 1. Oído y Vista: lo que sea que haya mandado, vuélvelo texto.
-  const { texto, tipo } = await interpretarMensaje(env, mensaje, conv.id);
+  //    (Salvo que el dueño los haya apagado desde el panel: entonces el agente
+  //    lo dice de frente en vez de ignorar el mensaje.)
+  const { texto, tipo } = await interpretarMensaje(env, mensaje, conv.id, {
+    oido: capacidadOn(ajustes, "cap_oido"),
+    vista: capacidadOn(ajustes, "cap_vista"),
+  });
   if (tipo !== "texto") paso.transcripcion = texto;
 
   // 2. Guardar. Si ya estaba, es un reintento de Zernio: no contestar dos veces.
@@ -161,6 +169,7 @@ export { MINUTOS_PAUSA, negocio };
  * probar signifique de verdad lo que va a pasar.
  */
 export async function razonar(env, mensajes, { conversacionId, usuario } = {}) {
+  await cargarAjustes(env);
   let crudo = await pensar(env, mensajes, { conversacionId });
   const herramientas = [];
   if (!hayHerramientas(env)) return { crudo, herramientas };

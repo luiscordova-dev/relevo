@@ -11,6 +11,7 @@
 
 import { atender } from "./agente.js";
 import { renderPanel } from "./panel/index.js";
+import { paginaLogin } from "./panel/login.js";
 import { apiInbox } from "./inbox.js";
 import { enviarReporteDiario, dispararRecordatorios, viaDelReporte } from "./reporte.js";
 import { registrarEvento } from "./datos.js";
@@ -27,15 +28,47 @@ export default {
       }
 
       if (url.pathname === "/panel") {
-        if (!claveOk(url, env)) return respuestaClave();
-        return new Response(renderPanel(), {
-          headers: { "Content-Type": "text/html; charset=utf-8" },
+        // Dos puertas: la clave en la URL (como la comparte la skill) o la
+        // sesión iniciada. Si entró con clave, se le siembra la cookie para
+        // que la clave no tenga que vivir en la barra del navegador.
+        if (claveOk(url, env)) {
+          return new Response(renderPanel(), {
+            headers: {
+              "Content-Type": "text/html; charset=utf-8",
+              ...(env.CLAVE_PANEL ? { "Set-Cookie": await cookieDeSesion(env) } : {}),
+            },
+          });
+        }
+        if (await sesionOk(request, env)) {
+          return new Response(renderPanel(), {
+            headers: { "Content-Type": "text/html; charset=utf-8" },
+          });
+        }
+        return new Response(paginaLogin(), {
+          status: 401, headers: { "Content-Type": "text/html; charset=utf-8" },
+        });
+      }
+
+      // Iniciar sesión: la clave del panel a cambio de una cookie firmada.
+      if (url.pathname === "/api/login" && request.method === "POST") {
+        const { clave } = await request.json().catch(() => ({}));
+        if (!env.CLAVE_PANEL || !igualesConstante(String(clave || ""), env.CLAVE_PANEL)) {
+          return Response.json({ ok: false, error: "Esa clave no es." }, { status: 401 });
+        }
+        return Response.json({ ok: true }, { headers: { "Set-Cookie": await cookieDeSesion(env) } });
+      }
+
+      if (url.pathname === "/api/logout" && request.method === "POST") {
+        return Response.json({ ok: true }, {
+          headers: { "Set-Cookie": "rv_sesion=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax" },
         });
       }
 
       // API del panel: listar conversaciones, abrir un hilo, responder, pausar.
       if (url.pathname.startsWith("/api/")) {
-        if (!claveOk(url, env)) return Response.json({ error: "clave" }, { status: 401 });
+        if (!claveOk(url, env) && !(await sesionOk(request, env))) {
+          return Response.json({ error: "clave" }, { status: 401 });
+        }
         return await apiInbox(request, env, url);
       }
 
@@ -141,6 +174,39 @@ async function firmaValida(cuerpo, firmaHex, secreto) {
 // ── Utilidades ───────────────────────────────────────────────────────────────
 
 const claveOk = (url, env) => !env.CLAVE_PANEL || url.searchParams.get("clave") === env.CLAVE_PANEL;
+
+// ── Sesión del panel ─────────────────────────────────────────────────────────
+// La cookie no lleva la clave: lleva un token derivado de ella con HMAC. Robar
+// la cookie no revela la clave, y rotar la clave invalida todas las sesiones.
+
+async function tokenDeSesion(env) {
+  const clave = await crypto.subtle.importKey(
+    "raw", new TextEncoder().encode(env.CLAVE_PANEL),
+    { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const mac = await crypto.subtle.sign("HMAC", clave, new TextEncoder().encode("sesion-del-panel-v1"));
+  return [...new Uint8Array(mac)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function cookieDeSesion(env) {
+  const token = await tokenDeSesion(env);
+  // 30 días: el dueño entra desde su celular sin teclear la clave cada vez.
+  return `rv_sesion=${token}; Path=/; Max-Age=2592000; HttpOnly; Secure; SameSite=Lax`;
+}
+
+async function sesionOk(request, env) {
+  if (!env.CLAVE_PANEL) return true;
+  const cookies = request.headers.get("Cookie") || "";
+  const m = /(?:^|;\s*)rv_sesion=([a-f0-9]{64})/.exec(cookies);
+  if (!m) return false;
+  return igualesConstante(m[1], await tokenDeSesion(env));
+}
+
+function igualesConstante(a, b) {
+  if (a.length !== b.length) return false;
+  let dif = 0;
+  for (let i = 0; i < a.length; i++) dif |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return dif === 0;
+}
 
 const respuestaClave = () =>
   new Response("Necesitas tu clave. Agrega ?clave=TU_CLAVE al final de la dirección.", {

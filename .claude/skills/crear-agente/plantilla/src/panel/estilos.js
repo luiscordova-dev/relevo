@@ -1,6 +1,7 @@
 // El sistema visual del panel. Tokens primero: cambiarlos aquí re-tematiza todo.
 
 const CLARO = `
+  --display:Fraunces,Georgia,"Times New Roman",serif;
   --tinta:#131628; --morado:#6F00FF; --rojo:#F44336; --gris:#607179;
   --lienzo:#FAFAFA; --tarjeta:#FFFFFF; --apagado:#F4F2FA;
   --borde:#E8E6F0; --borde-fuerte:#D9D6E6;
@@ -46,11 +47,12 @@ aside{width:232px;flex:none;background:var(--lateral);color:var(--lateral-txt);
 nav{flex:1;overflow-y:auto;padding:4px 10px 10px}
 .ngrupo{font-size:10px;letter-spacing:.1em;color:var(--lateral-sec);
         padding:14px 10px 6px;text-transform:uppercase}
-.nitem{display:flex;align-items:center;gap:10px;width:100%;padding:9px 10px;margin:1px 0;
-       border:0;border-radius:9px;background:none;color:var(--lateral-txt);cursor:pointer;
-       font-size:13.5px;text-align:left;text-decoration:none;transition:background .12s}
+.nitem{display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;margin:2px 0;
+       border:0;border-left:3px solid transparent;border-radius:12px;background:none;
+       color:var(--lateral-txt);cursor:pointer;font-size:13.5px;text-align:left;
+       text-decoration:none;transition:background .12s,border-color .12s}
 .nitem:hover{background:var(--lateral-linea)}
-.nitem.on{background:var(--lateral-activo);font-weight:600}
+.nitem.on{background:var(--lateral-activo);font-weight:600;border-left-color:var(--morado)}
 .nitem .ic{width:20px;text-align:center;flex:none}
 .nitem .nn{margin-left:auto;background:var(--rojo);color:#fff;font-size:10px;font-weight:700;
        padding:1px 7px;border-radius:20px}
@@ -74,7 +76,7 @@ nav{flex:1;overflow-y:auto;padding:4px 10px 10px}
         border-bottom:1px solid var(--borde);background:var(--tarjeta);
         position:sticky;top:0;z-index:5}
 .miga{font-size:11px;letter-spacing:.08em;color:var(--sec);text-transform:uppercase}
-.titulo{font-size:19px;font-weight:800;letter-spacing:-.3px;margin-top:1px}
+.titulo{font-family:var(--display);font-size:23px;font-weight:600;letter-spacing:-.3px;margin-top:1px}
 .tope-der{margin-left:auto;display:flex;align-items:center;gap:10px}
 .btn-tema{border:1px solid var(--borde-fuerte);background:var(--tarjeta);color:var(--txt);
         border-radius:999px;width:38px;height:38px;cursor:pointer;font-size:15px;
@@ -95,15 +97,15 @@ nav{flex:1;overflow-y:auto;padding:4px 10px 10px}
      padding:16px 18px;box-shadow:var(--sombra)}
 .kpi .et{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--sec);
      display:flex;gap:6px;align-items:center}
-.kpi b{display:block;font-size:28px;font-weight:800;letter-spacing:-.8px;margin-top:6px;
-     font-variant-numeric:tabular-nums}
+.kpi b{display:block;font-family:var(--display);font-size:31px;font-weight:600;
+     letter-spacing:-.5px;margin-top:6px;font-variant-numeric:tabular-nums}
 .kpi .sub{font-size:11.5px;color:var(--sec);margin-top:2px}
 .kpi.acento{border-color:var(--morado)}
 .kpi.acento b{color:var(--morado)}
 .caja{background:var(--tarjeta);border:1px solid var(--borde);border-radius:14px;
      box-shadow:var(--sombra);margin-top:16px;overflow:hidden}
 .caja-cab{display:flex;align-items:baseline;gap:10px;padding:15px 18px 0}
-.caja-cab h3{font-size:15px;font-weight:800;margin:0}
+.caja-cab h3{font-family:var(--display);font-size:17px;font-weight:600;margin:0}
 .caja-cab .mini{font-size:11.5px;color:var(--sec)}
 .caja-cab .der{margin-left:auto;font-size:12.5px}
 .caja-cuerpo{padding:14px 18px 18px}
@@ -111,6 +113,65 @@ nav{flex:1;overflow-y:auto;padding:4px 10px 10px}
 .vacio-caja{padding:34px 20px;text-align:center;color:var(--sec);font-size:13.5px}
 .vacio-caja b{display:block;color:var(--txt);font-weight:800;margin-bottom:4px}
 a.liga{color:var(--morado);text-decoration:none;font-weight:600}
+
+/* ═══ Botones — el sistema, definido una sola vez ═══ */
+.btn-pri,.btn-sec,.btn-dark{
+  font:inherit;font-size:13.5px;font-weight:600;letter-spacing:.01em;cursor:pointer;
+  border-radius:12px;padding:10px 18px;transition:transform .12s,box-shadow .12s,
+  border-color .14s,opacity .12s;display:inline-flex;align-items:center;gap:7px}
+.btn-pri{border:0;background:var(--morado);color:#fff;
+  box-shadow:0 1px 2px rgba(111,0,255,.3),0 6px 16px -6px rgba(111,0,255,.45)}
+.btn-pri:hover{transform:translateY(-1px)}
+.btn-pri:disabled{opacity:.55;transform:none;cursor:default}
+.btn-dark{border:0;background:var(--tinta);color:#fff}
+:root[data-tema="oscuro"] .btn-dark{background:#fff;color:var(--tinta)}
+@media(prefers-color-scheme:dark){:root:not([data-tema="claro"]) .btn-dark{background:#fff;color:var(--tinta)}}
+.btn-dark:hover{transform:translateY(-1px)}
+.btn-sec{border:1px solid var(--borde-fuerte);background:var(--tarjeta);color:var(--txt)}
+.btn-sec:hover{border-color:var(--morado);color:var(--morado)}
+.btn-sec:disabled{opacity:.55;cursor:default}
+
+/* selects con el mismo oficio que los botones */
+select{
+  font:inherit;font-size:12.5px;font-weight:600;color:var(--txt);cursor:pointer;
+  background:var(--tarjeta);border:1px solid var(--borde-fuerte);border-radius:999px;
+  padding:7px 30px 7px 14px;appearance:none;-webkit-appearance:none;
+  background-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23607179' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;
+  transition:border-color .14s}
+select:hover{border-color:var(--morado)}
+
+/* interruptor on/off */
+.sw{position:relative;width:40px;height:23px;flex:none;cursor:pointer}
+.sw input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.sw i{position:absolute;inset:0;border-radius:99px;background:var(--apagado);
+  border:1px solid var(--borde-fuerte);transition:background .16s,border-color .16s}
+.sw i::after{content:'';position:absolute;top:2px;left:2px;width:17px;height:17px;
+  border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(19,22,40,.3);
+  transition:transform .16s}
+.sw input:checked + i{background:var(--morado);border-color:var(--morado)}
+.sw input:checked + i::after{transform:translateX(17px)}
+.sw input:focus-visible + i{box-shadow:var(--anillo)}
+
+/* el botón "díselo a Claude" — compartido por todas las secciones */
+.cap-prompt{border:1px dashed var(--borde-fuerte);background:var(--lienzo);border-radius:10px;
+  padding:8px 11px;font-size:11.5px;color:var(--sec);cursor:pointer;text-align:left;
+  font-family:inherit;transition:border-color .14s;width:100%}
+.cap-prompt:hover{border-color:var(--morado);color:var(--txt)}
+.cap-prompt b{color:var(--morado);font-size:10.5px;letter-spacing:.05em;display:block;margin-bottom:3px}
+
+/* mi cuenta (sidebar) */
+.mi-cuenta{display:flex;align-items:center;gap:10px;margin:0 10px 8px;padding:10px 12px;
+  border:1px solid var(--lateral-linea);border-radius:14px}
+.mc-avatar{width:32px;height:32px;border-radius:50%;background:var(--lateral-activo);
+  color:#fff;display:grid;place-items:center;font-weight:800;font-size:13px;flex:none}
+.mc-texto{min-width:0;flex:1}
+.mc-texto b{display:block;font-size:12.5px;letter-spacing:-.1px}
+.mc-texto span{font-size:10.5px;color:var(--lateral-sec)}
+.mc-salir{border:1px solid var(--lateral-linea);background:none;color:var(--lateral-sec);
+  font:inherit;font-size:11px;font-weight:600;border-radius:9px;padding:5px 10px;
+  cursor:pointer;transition:color .14s,border-color .14s}
+.mc-salir:hover{color:#fff;border-color:#fff}
 
 /* barras de actividad */
 .barras{display:flex;gap:8px;align-items:flex-end;height:120px;padding-top:8px}
@@ -126,7 +187,7 @@ a.liga{color:var(--morado);text-decoration:none;font-weight:600}
   .shell{flex-direction:column}
   aside{width:100%;height:auto;position:fixed;bottom:0;top:auto;z-index:30;
         flex-direction:row;align-items:center;border-top:1px solid var(--lateral-linea)}
-  .logo,.ngrupo,.pie-lateral{display:none}
+  .logo,.ngrupo,.pie-lateral,.mi-cuenta{display:none}
   nav{display:flex;flex:1;padding:6px;overflow-x:auto;overflow-y:hidden}
   .nitem{flex:1;flex-direction:column;gap:3px;font-size:9px;padding:7px 3px;min-width:62px}
   /* 7+ secciones: la etiqueta se corta con puntos en vez de encimarse con la vecina */

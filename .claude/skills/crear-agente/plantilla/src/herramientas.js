@@ -17,6 +17,8 @@ export const MAX_VUELTAS = 2;
 /** Las herramientas que SÍ se pueden usar ahora: las local: siempre; las de
  *  Composio solo si la llave está puesta. */
 export function herramientasUsables(env) {
+  // El switch del panel (Capacidades → Usa herramientas) apaga TODAS de un golpe.
+  if (String(env.AJUSTES?.cap_herramientas ?? "1") === "0") return [];
   return (negocio.herramientas || []).filter((h) =>
     String(h.tool).startsWith("local:") || !!env.COMPOSIO_API_KEY);
 }

@@ -12,6 +12,7 @@ import {
   registrarEvento, PAUSA_INDEFINIDA, kpis, actividadPorDia, gasto, gastoPorDia,
   conteoEventos, leerAjustes, guardarAjuste, resumenDelDia,
   listarDocumentos, leerDocumento, guardarDocumento, marcarIndexado, borrarDocumento,
+  capacidadOn,
 } from "./datos.js";
 import {
   ragDisponible, ragActivo, indexarDocumento, borrarDelIndice, infoEsGrande, buscarFragmentos,
@@ -30,6 +31,9 @@ const AJUSTES_PERMITIDOS = new Set([
   "tope_mensual_neurons",       // presupuesto: al llegar, baja al modelo suplente
   "zona_horaria",
   "moneda",
+  // Los switches de Capacidades. Sin valor = encendida; "0" = apagada.
+  "cap_oido", "cap_vista", "cap_herramientas", "cap_conocimiento",
+  "cap_recordatorios", "cap_reporte",
 ]);
 
 const leerJson = async (request) => request.json().catch(() => ({}));
@@ -143,8 +147,10 @@ export async function apiInbox(request, env, url) {
   }
 
   if (ruta === "flujo") {
-    const [conteos, ajustes, rag, docs] = await Promise.all([
-      conteoEventos(env, 30), leerAjustes(env), ragActivo(env),
+    const ajustes = await leerAjustes(env);
+    env.AJUSTES = ajustes;
+    const [conteos, rag, docs] = await Promise.all([
+      conteoEventos(env, 30), ragActivo(env),
       env.DB.prepare("SELECT COUNT(*) n, COALESCE(SUM(trozos),0) t FROM documentos")
         .first().catch(() => ({ n: 0, t: 0 })),
     ]);
@@ -157,6 +163,14 @@ export async function apiInbox(request, env, url) {
       herramientas: (negocio.herramientas || []).map((h) => ({ id: h.id, tool: h.tool, para: h.para })),
       canales: { whatsapp: !!env.ZERNIO_ACCOUNT_ID, telegramAvisos: !!env.TELEGRAM_CHAT_ID },
       composio: composioListo(env),
+      caps: {
+        oido: capacidadOn(ajustes, "cap_oido"),
+        vista: capacidadOn(ajustes, "cap_vista"),
+        herramientas: capacidadOn(ajustes, "cap_herramientas"),
+        conocimiento: capacidadOn(ajustes, "cap_conocimiento"),
+        recordatorios: capacidadOn(ajustes, "cap_recordatorios"),
+        reporte: capacidadOn(ajustes, "cap_reporte"),
+      },
       conocimiento: { activo: rag, documentos: docs?.n || 0, trozos: docs?.t || 0 },
       reporteCorreo: !!viaDelReporte(env).via,
       reporteVia: viaDelReporte(env).via,
