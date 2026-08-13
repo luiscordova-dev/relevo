@@ -29,7 +29,10 @@ nueva es:
 
 1. **La función** en `src/capacidades.js` (créalo si no existe): recibe `datos`, devuelve
    `{ ok, data }` o `{ ok: false, error }`. **Nunca lanza** — un fallo no puede tumbar la
-   conversación.
+   conversación. Y **tolerante con los nombres**: el modelo a veces manda `cp` en vez de
+   `codigo_postal` — acepta las variantes obvias (`datos.codigo_postal ?? datos.cp ?? …`).
+   En el campo `datos` de la herramienta, di la clave EXACTA: `'codigo_postal (5 dígitos,
+   con esa clave)'`.
 2. **El registro** en `negocio.js` → `herramientas`, con `tool: "local:<nombre>"`. En
    `ejecutar()` de `herramientas.js`, el prefijo `local:` enruta a `capacidades.js` en vez
    de a Composio (agrégalo la primera vez: son ~6 líneas).

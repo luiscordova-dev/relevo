@@ -83,7 +83,8 @@ Reglas del protocolo:
 - Solo un bloque por respuesta, siempre al final, en una sola línea.
 - Si no sabes el nombre REAL de la persona, NO mandes el bloque de lead: primero pídeselo.
   Jamás pongas "desconocido", "cliente" ni nada inventado en el campo nombre.
-- El bloque es invisible para el cliente: no lo menciones ni lo expliques nunca.`;
+- El bloque es invisible para el cliente: no lo menciones ni lo expliques nunca.` +
+  bloqueDeHerramientas(env || {});
 }
 
 /** Separa el texto que ve el cliente de los datos estructurados. */

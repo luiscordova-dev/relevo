@@ -14,13 +14,19 @@ const MARCA_FIN = "<<<FIN>>>";
 // que el modelo se atoró en un ciclo, y el cliente lleva demasiado esperando.
 export const MAX_VUELTAS = 2;
 
-export const hayHerramientas = (env) =>
-  !!env.COMPOSIO_API_KEY && (negocio.herramientas || []).length > 0;
+/** Las herramientas que SÍ se pueden usar ahora: las local: siempre; las de
+ *  Composio solo si la llave está puesta. */
+export function herramientasUsables(env) {
+  return (negocio.herramientas || []).filter((h) =>
+    String(h.tool).startsWith("local:") || !!env.COMPOSIO_API_KEY);
+}
+export const hayHerramientas = (env) => herramientasUsables(env).length > 0;
 
 /** Lo que el cerebro necesita saber para pedirlas. Se inyecta en el prompt. */
 export function bloqueDeHerramientas(env) {
-  if (!hayHerramientas(env)) return "";
-  const lista = negocio.herramientas
+  const usables = herramientasUsables(env);
+  if (!usables.length) return "";
+  const lista = usables
     .map((h) => `- ${h.id}: ${h.para}${h.datos ? ` — necesita: ${h.datos}` : ""}`)
     .join("\n");
 
@@ -34,6 +40,11 @@ Cuando necesites una, responde SOLO con esta línea y nada más:
 ${MARCA_INICIO}{"id":"ID_DE_LA_HERRAMIENTA","datos":{ … }}${MARCA_FIN}
 
 Reglas:
+- Estas herramientas son parte de lo que el negocio SÍ ofrece. Si la pregunta del cliente
+  cae en el "para" de una herramienta, ÚSALA — no digas que no tienes esa información y
+  no digas que el negocio no lo ofrece.
+- Si te falta el dato que la herramienta necesita (ej. el código postal), pídeselo al
+  cliente primero, con naturalidad.
 - No le anuncies al cliente que vas a usar una herramienta: úsala y ya.
 - Te voy a devolver el resultado y con eso escribes tu respuesta normal.
 - Si el resultado viene con error, dile al cliente que hubo un problema y toma sus datos.

@@ -8,6 +8,7 @@ import { APP } from "./app.js";
 import * as resumen from "./secciones/resumen.js";
 import * as conversaciones from "./secciones/conversaciones.js";
 import * as flujo from "./secciones/flujo.js";
+import * as capacidades from "./secciones/capacidades.js";
 import * as costos from "./secciones/costos.js";
 import * as configuracion from "./secciones/configuracion.js";
 
@@ -21,6 +22,7 @@ const SECCIONES = [
   { id: "conversaciones", icono: "💬", titulo: "Conversaciones", mod: conversaciones, badge: "navUrge" },
   { grupo: "Mi agente" },
   { id: "flujo", icono: "🧬", titulo: "Flujo", mod: flujo },
+  { id: "capacidades", icono: "⚡", titulo: "Capacidades", mod: capacidades },
   { grupo: "Análisis" },
   { id: "costos", icono: "💰", titulo: "Costos", mod: costos },
   { grupo: "" },
