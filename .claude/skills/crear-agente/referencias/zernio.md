@@ -75,3 +75,117 @@ Los adjuntos se bajan de `attachment.url` con `Authorization: Bearer <ZERNIO_API
 ## Responder
 `POST /v1/inbox/conversations/{id}/messages` con `{accountId, message}` →
 devuelve `data.messageId`. Fuera de la ventana de 24 h WhatsApp rechaza el envío.
+
+---
+
+# Número propio (producción)
+
+> Esta sección es la ruta que promete `docs/ir-a-produccion.md`. El sandbox NO sirve para
+> clientes reales: solo habla con el teléfono que lo activó. Para que cualquiera le
+> escriba hace falta un número propio.
+
+## ⚠️ Lo primero que hay que decirle a la persona: NO hay coexistencia
+
+Un número en Cloud API **deja de vivir en la app de WhatsApp Business del celular**. No se
+puede tener el mismo número contestando en la app y en la API a la vez — Zernio no expone
+coexistencia (no hay comandos de `coexist`/`migrate`/`import` en el CLI).
+
+Consecuencias que hay que decir **antes** de que compre nada:
+- Si el negocio ya atiende a diario desde la app de WhatsApp Business con ese número,
+  migrarlo significa que dejan de contestar desde el celular: **el panel pasa a ser su
+  celular** para ese número.
+- Por eso lo sano casi siempre es **un número nuevo** para el agente, y dejar el de
+  siempre intacto en el teléfono.
+- Si de verdad necesita coexistencia (mismo número en app + API), eso es otra plataforma;
+  no lo prometas desde aquí.
+
+## Camino A · Comprar el número en Zernio (lo normal)
+
+```bash
+zernio whatsappphonenumbers:list-whats-app-number-countries --pretty   # precio, KYC y stock
+zernio whatsappphonenumbers:search-available-whats-app-numbers --country MX --pretty
+zernio whatsappphonenumbers:purchase-whats-app-phone-number --profileId <id> --country MX --pretty
+```
+
+Precios reales (verificados contra la API, mensual, además del costo de conversaciones
+que cobra WhatsApp aparte):
+
+| País | Precio | ¿KYC? | Nota |
+|---|---|---|---|
+| 🇺🇸 US | $3.00 | **No** | el más rápido de encender |
+| 🇪🇸 ES | $3.00 | Sí | national |
+| 🇲🇽 MX | $6.00 | Sí | local |
+| 🇨🇱 CL | $9.00 | Sí | local |
+| 🇦🇷 AR | $9.00 | Sí | **sin stock** al verificar |
+| 🇨🇴 CO | $21.00 | No | mobile |
+
+**La compra cuesta dinero: nunca la corras tú.** Enséñale el precio, que él confirme, y
+que la ejecute él o te lo pida explícitamente.
+
+`--profileId` sale de `zernio profiles:list --pretty`.
+
+**Si el país pide KYC** (casi toda LATAM), el número queda pendiente hasta aprobarse:
+```bash
+zernio whatsappphonenumbers:get-whats-app-number-kyc-form --pretty          # qué piden
+zernio whatsappphonenumbers:validate-whats-app-number-kyc-address --pretty  # tier 4, pre-valida
+zernio whatsappphonenumbers:upload-whats-app-number-kyc-document --pretty
+zernio whatsappphonenumbers:submit-whats-app-number-kyc --pretty
+zernio whatsappphonenumbers:get-whats-app-number-remediation <id> --pretty  # si lo rechazan
+zernio whatsappphonenumbers:remediate-whats-app-number <id> --pretty
+```
+
+## Camino B · Traer una WABA que ya tiene (BYO)
+
+Solo si el negocio **ya** está en Cloud API con otro proveedor:
+```bash
+zernio connect:whats-app-credentials \
+  --profileId <id> --wabaId <waba> --phoneNumberId <phone> --accessToken <token> --pretty
+zernio connect:list-whats-app-phone-numbers --profileId <id> --tempToken <tmp> --pretty
+zernio connect:complete-whats-app-phone-number-selection --pretty
+```
+El `accessToken` es un secreto: que lo pegue él, y **no lo repitas en el chat ni lo dejes
+en un archivo**.
+
+## Verificar que quedó vivo (evidencia, no fe)
+
+```bash
+zernio accounts:list --pretty          # el nuevo accountId de platform "whatsapp"
+zernio whatsappphonenumbers:get-whats-app-number-info --accountId <accountId> --pretty
+```
+Lo que hay que leer del resultado, y qué significa cuando muerde:
+
+| Campo | Lo que quieres ver | Si no |
+|---|---|---|
+| `status` | `CONNECTED` | aún no terminó de registrarse |
+| `platform_type` | `CLOUD_API` | no es un número de API |
+| `quality_rating` | `GREEN` | lo están reportando |
+| `health_status.can_send_message` | `AVAILABLE` | ver `errors[]` abajo |
+| `name_status` | aprobado | el límite no sube hasta que aprueben el nombre |
+
+Dos errores que salen seguido y **no** son culpa del kit:
+- **141006 · payment method** — bloquea las conversaciones *iniciadas por el negocio*.
+  Hay que poner método de pago en el Business Manager de Meta. Contestar dentro de la
+  ventana de 24 h sigue funcionando.
+- **`code_verification_status: EXPIRED`** — hay que reverificar el número.
+
+## Apuntar el agente al número nuevo
+
+El agente no cambia; solo cambia a qué cuenta escucha.
+```bash
+# 1) en wrangler.jsonc: ZERNIO_ACCOUNT_ID = el accountId NUEVO
+grep ZERNIO_ACCOUNT_ID wrangler.jsonc
+# 2) el webhook es POR CUENTA: hay que crear el del número nuevo
+zernio webhooks:create-settings --name "<slug>-prod" \
+  --url "https://<worker>.workers.dev/webhook/zernio" \
+  --secret "<el mismo ZERNIO_WEBHOOK_SECRET>" \
+  --events "message.received" --isActive true --pretty
+# 3) publicar y esperar ~20 s
+npx wrangler deploy
+```
+⚠️ **Un agente por cuenta de Zernio.** Si dejas vivo el webhook del sandbox junto al de
+producción, los dos agentes reciben los mismos mensajes. Borra el viejo:
+`zernio webhooks:delete-settings --id <id>`.
+
+Cierra corriendo la autoprueba (`POST /prueba?clave=…`) y que la persona le escriba
+desde un teléfono **que no sea** el que activó el sandbox: ese es el punto — que ahora
+cualquiera puede.

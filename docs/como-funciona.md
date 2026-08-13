@@ -64,20 +64,30 @@ panel se puede modificar pidiéndoselo a Claude en español.
 tu-agente/
 ├── negocio.js          ← lo único que necesitas tocar: tu información
 ├── marca.js            ← la firma del pie del panel
-├── schema.sql          ← las 4 tablas
-├── wrangler.jsonc      ← configuración y modelos
+├── schema.sql          ← las 7 tablas (conversaciones, mensajes, leads, eventos,
+│                          uso, ajustes, documentos)
+├── wrangler.jsonc      ← configuración, modelos y bindings
 └── src/
     ├── index.js        ← rutas, firma del webhook, filtro por cuenta, cron
     ├── agente.js       ← el flujo: interpretar → pensar → responder → capturar → avisar
-    ├── cerebro.js      ← el prompt (con ejemplos) y la llamada al modelo
+    ├── cerebro.js      ← el prompt (con ejemplos), la temperatura y la llamada al modelo
     ├── medios.js       ← notas de voz y fotos
     ├── avisos.js       ← los avisos a Telegram, con su evidencia
-    ├── datos.js        ← D1: conversaciones, mensajes, interesados
+    ├── datos.js        ← D1: conversaciones, mensajes, interesados, ajustes
+    ├── capacidades.js  ← los switches del panel, con sus gates en runtime
+    ├── herramientas.js ← el loop de tool-calling (lo usa el playground)
+    ├── zernio.js       ← hablar con WhatsApp: leer, responder, bajar adjuntos
     ├── inbox.js        ← la API del panel
-    ├── panel.js        ← el panel completo, en una página
-    ├── autoprueba.js   ← las 8 pruebas
+    ├── autoprueba.js   ← la tanda de pruebas de punta a punta
     ├── calidad.js      ← el control de calidad con auto-reparación
-    └── reporte.js      ← el resumen diario por correo (opcional)
+    ├── archivos-prueba.js
+    ├── panel/          ← el panel: index.js, app.js, estilos.js, login.js, logo.js
+    │   └── secciones/  ← resumen, conversaciones, flujo, capacidades,
+    │                      conocimiento, costos, configuración
+    └── avanzado/       ← 🧪 el playground, sin soporte
+        ├── composio.js      ← citas e integraciones
+        ├── conocimiento.js  ← RAG con Vectorize
+        └── reporte.js       ← el resumen diario por correo (opcional)
 ```
 
 ## Los modelos
@@ -107,12 +117,13 @@ recomienda el cambio. Claude lo aplica sin que tú tengas que entender nada.
 | Ruta | Para qué |
 |---|---|
 | `POST /webhook/zernio` | Por aquí entran los mensajes de tus clientes |
-| `GET /panel?clave=` | Tu bandeja de entrada |
+| `GET /panel` | Tu bandeja de entrada. Dos puertas: la sesión iniciada (cookie firmada) o `?clave=` la primera vez — al entrar con clave se siembra la cookie para que no viva en la barra del navegador |
+| `POST /api/login` · `/api/logout` | Abrir y cerrar sesión (cookie `HttpOnly; Secure; SameSite=Lax`) |
 | `GET /api/*` | Lo que usa el panel (conversaciones, hilo, responder, pausar) |
-| `POST /prueba?clave=` | Las 8 pruebas con evidencia |
+| `POST /prueba?clave=` | La tanda de pruebas con evidencia (8, o 9 con Conocimiento encendido) |
 | `POST /calidad?clave=` | El control de calidad del cerebro |
 | `GET /salud` | Qué está configurado y qué falta |
-| cron 3:00 am | El resumen diario por correo, si lo activaste |
+| cron cada 15 min | Recordatorios. Y a las 3:00 am **de tu `ZONA_HORARIA`**, el resumen diario por correo si lo activaste — una sola vez al día |
 
 
 ## Por qué D1 y no R2 (ni KV)

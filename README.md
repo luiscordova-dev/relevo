@@ -117,9 +117,14 @@ por bake-off contra 4 modelos, con GPT-OSS-120B de suplente y BYOK opcional
 - **[Guía para tu cliente](GUIA.md)** — si entregas el agente a alguien no técnico
 - **[AVANZADO.md](AVANZADO.md)** — el mapa del playground
 
-## Licencia
+## Licencia y la única condición
 
-MIT. Úsalo, véndelo, hazlo tuyo.
+**MIT.** Úsalo, véndelo, modifícalo, entrégalo a tus clientes: es tuyo.
+
+Lo único que Relevo pide a cambio es **la línea del pie del panel** — *"hecho con Relevo ·
+by Luis Córdova"* — que no se quita. Va horneada en `src/panel/index.js` y en el login.
+Todo lo demás (nombre, tono, colores, secciones, el código entero) sí es de la persona
+que lo construye.
 
 ---
 

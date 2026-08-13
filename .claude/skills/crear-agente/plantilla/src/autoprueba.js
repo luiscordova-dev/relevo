@@ -175,8 +175,9 @@ export async function autoprueba(env) {
     return { evidencia: "Llave válida y número asignado" };
   }, "Vuelve a generar la llave de Zernio y guárdala de nuevo.");
 
-  // 8 · ¿El conocimiento se recupera? Solo si está encendido: un agente que no usa
-  // documentos no debe fallar una prueba de algo que no tiene.
+  // 8 (opcional) · ¿El conocimiento se recupera? Solo si está encendido: un agente que
+  // no usa documentos no debe fallar una prueba de algo que no tiene. Cuando corre, el
+  // total sube de 8 a 9 — por eso ninguna prueba lleva su número en el nombre.
   if (await ragActivo(env)) {
     await correr("📚 Encuentra en tus documentos", async () => {
       const doc = await env.DB.prepare(
@@ -207,7 +208,7 @@ export async function autoprueba(env) {
   await env.DB.prepare("DELETE FROM leads WHERE conversacion_id = ?").bind(convPrueba).run().catch(() => {});
   await env.DB.prepare("DELETE FROM conversaciones WHERE id = ?").bind(convPrueba).run().catch(() => {});
 
-  // 8 · Control de calidad del cerebro. Va al final porque es el más caro.
+  // Última · Control de calidad del cerebro. Va al final porque es el más caro.
   //     Corre aunque otras pruebas hayan fallado: si falló la captura, ESTE es
   //     el que dice por qué y cómo arreglarlo.
   let calidad = null;

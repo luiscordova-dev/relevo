@@ -14,7 +14,7 @@ import { renderPanel } from "./panel/index.js";
 import { paginaLogin } from "./panel/login.js";
 import { apiInbox } from "./inbox.js";
 import { enviarReporteDiario, dispararRecordatorios, viaDelReporte } from "./avanzado/reporte.js";
-import { registrarEvento } from "./datos.js";
+import { registrarEvento, horaLocal, reporteYaSalioHoy } from "./datos.js";
 import { autoprueba } from "./autoprueba.js";
 import { diagnosticar } from "./calidad.js";
 
@@ -103,8 +103,12 @@ export default {
       // Los recordatorios corren siempre; el reporte solo si lo configuraron.
       await dispararRecordatorios(env).catch((e) =>
         registrarEvento(env, "error", `Recordatorios: ${e.message || e}`));
-      const esDeMadrugada = new Date().getUTCHours() === 9;
-      if (esDeMadrugada) {
+      // Dos guardas, y las dos hacen falta:
+      //  1) la hora se mide en la ZONA_HORARIA del negocio, no en UTC — si no,
+      //     cambiar la zona no movía el reporte y llegaba a deshoras;
+      //  2) "ya salió hoy", porque el cron corre cada 15 min y la ventana de las
+      //     3 am se cumple cuatro veces: sin esto son cuatro correos iguales.
+      if (horaLocal(env) === 3 && !(await reporteYaSalioHoy(env))) {
         await enviarReporteDiario(env).catch((e) =>
           registrarEvento(env, "error", `Reporte diario: ${e.message || e}`));
       }

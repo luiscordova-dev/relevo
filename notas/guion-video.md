@@ -73,8 +73,8 @@ en dos segundos. Evita usar un giro que compita con tu audiencia.
 **En pantalla:** terminal, letra grande.
 
 ```bash
-git clone https://github.com/USUARIO/contesta.git
-cd contesta
+git clone https://github.com/luiscordova-dev/relevo.git
+cd relevo
 claude
 ```
 Y dentro: `/crear-agente`

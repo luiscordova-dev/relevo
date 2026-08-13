@@ -3,6 +3,39 @@
 
 const ahora = () => Date.now();
 
+/**
+ * El día de hoy (YYYY-MM-DD) en la zona del negocio, no en UTC.
+ * El Worker corre en UTC: sin esto, "hoy" cambia a media tarde en México.
+ */
+export function fechaLocal(env, cuando = Date.now()) {
+  return new Date(cuando).toLocaleDateString("en-CA", {
+    timeZone: env.ZONA_HORARIA || "America/Mexico_City",
+  });
+}
+
+/** La hora local (0-23) en la zona del negocio. */
+export function horaLocal(env, cuando = Date.now()) {
+  return Number(new Date(cuando).toLocaleString("en-US", {
+    timeZone: env.ZONA_HORARIA || "America/Mexico_City",
+    hour: "2-digit", hour12: false,
+  }));
+}
+
+/**
+ * ¿Ya salió el reporte hoy? El cron corre cada 15 min, así que la ventana de la
+ * hora se cumple cuatro veces: sin esta guarda el dueño recibe cuatro correos
+ * idénticos cada mañana. Se apoya en el evento "reporte" que deja el envío.
+ */
+export async function reporteYaSalioHoy(env) {
+  const hoy = fechaLocal(env);
+  // 26 h de margen: cubre el día local completo aunque el Worker esté en UTC.
+  const desde = Date.now() - 26 * 60 * 60 * 1000;
+  const { results = [] } = await env.DB.prepare(
+    "SELECT creado_en FROM eventos WHERE tipo = 'reporte' AND creado_en >= ?"
+  ).bind(desde).all();
+  return results.some((e) => fechaLocal(env, e.creado_en) === hoy);
+}
+
 /** El arranque del mes en curso, en epoch ms. */
 export function ahoraMes() {
   const d = new Date(); d.setDate(1); d.setHours(0, 0, 0, 0);

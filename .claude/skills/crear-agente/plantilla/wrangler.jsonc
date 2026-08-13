@@ -23,7 +23,8 @@
   //   npx wrangler vectorize create NOMBRE-DEL-AGENTE-kb --dimensions=1024 --metric=cosine
   // "vectorize": [{ "binding": "KB", "index_name": "NOMBRE-DEL-AGENTE-kb" }],
 
-  // Cada 15 min revisa recordatorios; a las 3:00 am de México manda el reporte diario.
+  // Cada 15 min revisa recordatorios; a las 3:00 am de ZONA_HORARIA (abajo) manda el
+  // reporte diario, una sola vez al día aunque el cron pase cuatro veces por esa hora.
   "triggers": { "crons": ["*/15 * * * *"] },
 
   "vars": {

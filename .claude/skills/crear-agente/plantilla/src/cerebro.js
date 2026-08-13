@@ -107,6 +107,15 @@ Reglas del protocolo:
   bloqueDeHerramientas(env || {});
 }
 
+/**
+ * El agente hace dos cosas en la MISMA respuesta: le habla al cliente y emite el bloque
+ * del protocolo (lead / humano). Lo segundo es extracción estructurada, y con el muestreo
+ * por defecto el modelo se lo saltaba: medido contra el agente real, la captura de
+ * interesados fallaba ~2 de cada 3 veces. Bajar la temperatura la vuelve fiable sin
+ * volver las respuestas robóticas — y perder un interesado es el peor fallo del kit.
+ */
+const TEMPERATURA = 0.3;
+
 /** Separa el texto que ve el cliente de los datos estructurados. */
 export function separarDatos(respuestaCruda) {
   const texto = String(respuestaCruda || "");
@@ -183,7 +192,7 @@ export async function pensar(env, mensajes, contexto = {}) {
     if ((g?.n || 0) >= tope) modelo = "@cf/openai/gpt-oss-120b";
   }
 
-  const r = await env.AI.run(modelo, { messages: conSistema, max_tokens: 600 });
+  const r = await env.AI.run(modelo, { messages: conSistema, max_tokens: 600, temperature: TEMPERATURA });
   await anotar(modelo, r?.usage, true);
   return r?.response ?? r?.choices?.[0]?.message?.content ?? "";
 }
@@ -192,7 +201,9 @@ async function llamarOpenAI(key, modelo, messages) {
   const r = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-    body: JSON.stringify({ model: modelo || "gpt-4.1-mini", messages, max_tokens: 600 }),
+    body: JSON.stringify({
+      model: modelo || "gpt-4.1-mini", messages, max_tokens: 600, temperature: TEMPERATURA,
+    }),
   });
   if (!r.ok) throw new Error(`OpenAI ${r.status}: ${(await r.text()).slice(0, 200)}`);
   const d = await r.json();
@@ -218,6 +229,7 @@ async function llamarAnthropic(key, modelo, messages) {
       system,
       messages: messages.filter((m) => m.role !== "system"),
       max_tokens: 600,
+      temperature: TEMPERATURA,
     }),
   });
   if (!r.ok) throw new Error(`Anthropic ${r.status}: ${(await r.text()).slice(0, 200)}`);

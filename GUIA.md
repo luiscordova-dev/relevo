@@ -1,7 +1,8 @@
-# Guía del panel — para el dueño del negocio
+# Tu WhatsApp contestando solo — guía de principio a fin
 
-*(Si tú eres quien construyó el agente, esto no es para ti: es la guía que le entregas a
-tu cliente junto con su panel. Si construyes, tu punto de partida es el [README](README.md).)*
+*(Escrita para el dueño del negocio: no da por hecho que sabes programar. Si eres
+técnico y vas a entregarle esto a un cliente, tu punto de partida es el
+[README](README.md); esta guía puedes entregársela tal cual.)*
 
 **Lo que vas a lograr:** en unos 30 minutos le vas a escribir a un número de WhatsApp desde
 tu propio celular, tu agente te va a contestar con la información de tu negocio, y cuando
@@ -15,7 +16,7 @@ Ten a la mano:
 - **Tu celular**, con WhatsApp y Telegram
 - **Lo que te preguntan tus clientes** — precios, servicios, horario. Si lo tienes en un
   archivo o en tu página, mejor: se lo pasas tal cual
-- **20 minutos sin interrupciones**
+- **Media hora sin interrupciones**
 
 No necesitas tarjeta. Ningún paso te la va a pedir.
 
@@ -26,8 +27,8 @@ No necesitas tarjeta. Ningún paso te la va a pedir.
 Abre la Terminal de tu computadora y pega esto, línea por línea:
 
 ```bash
-git clone https://github.com/USUARIO/contesta.git
-cd contesta
+git clone https://github.com/luiscordova-dev/relevo.git
+cd relevo
 claude
 ```
 
@@ -119,13 +120,13 @@ Te va a contestar con un código largo. **Cópialo y pégaselo a Claude.**
 
 ## Paso 6 · Claude construye y prueba (5 minutos)
 
-Aquí no haces nada. Claude escribe tu agente, lo publica en internet y le corre ocho
-pruebas: que conteste bien, que no invente, que entienda audios y fotos, que capture
-interesados y **que el aviso llegue de verdad a tu Telegram**.
+Aquí no haces nada. Claude escribe tu agente, lo publica en internet y le corre su
+tanda de pruebas: que conteste bien, que no invente, que entienda audios y fotos, que
+capture interesados y **que el aviso llegue de verdad a tu Telegram**.
 
 Si algo sale mal, lo arregla solo y te dice qué pasó en español.
 
-> 📸 *[captura: las 8 pruebas en verde]*
+> 📸 *[captura: las pruebas en verde]*
 
 ---
 
@@ -155,13 +156,10 @@ Claude te va a dar un link como este:
 https://tu-negocio.workers.dev/panel
 ```
 
-La primera vez te pide tu clave (te la dio quien configuró el agente). Después de
+La primera vez te pide tu clave (te la dio Claude al terminar; si alguien más te armó
+el agente, pídesela). Después de
 entrar, la sesión queda iniciada en tu dispositivo — no la tecleas cada vez. Para
 salir, abajo a la izquierda: **Mi cuenta → Salir**.
-
-```
-
-```
 
 Ábrelo en tu celular y **guárdalo en la pantalla de inicio**. Ahí tienes:
 
@@ -193,6 +191,8 @@ Los tres más frecuentes:
 ## ¿Y ahora qué?
 
 - **Cámbiale cosas** hablándole normal a Claude → [ideas aquí](docs/personalizar.md)
-- **Conéctale tu propio número** para atender clientes reales →
-  [cómo hacerlo](docs/ir-a-produccion.md)
+- **Conéctale tu propio número** para que te escriba cualquiera, no solo tu teléfono →
+  [cómo hacerlo](docs/ir-a-produccion.md). Ojo antes de decidir: ese número **deja la app
+  de WhatsApp de tu celular**, y tiene una renta mensual (desde $3 USD). Por eso casi
+  siempre conviene un número nuevo, y dejar el de siempre en tu teléfono.
 - **Que te llegue un resumen por correo** cada noche — pídeselo a Claude, son 3 minutos

@@ -21,6 +21,19 @@ Su punto de entrada es la skill **`/crear-agente`**: entrevista sobre su negocio
 genera el agente → lo despliega en SU Cloudflare → lo prueba con evidencia. No le pidas
 que corra comandos: tú los corres.
 
+## Si pide su propio número de WhatsApp
+*"Quiero conectar mi número"*, *"quiero atender clientes de verdad"*, *"pasar a
+producción"* → **`/crear-agente`, Fase 9**. Los comandos verificados y los precios están
+en `crear-agente/referencias/zernio.md` → *Número propio (producción)*.
+**NO es `/conectar`** (esa es del playground: Composio y otros canales). Dos cosas que se
+dicen antes de que gaste: **no hay coexistencia** — el número se muda a Cloud API y deja
+la app del celular — y **la compra la autoriza y la corre la persona**, nunca tú.
+
+## Los docs para el usuario final (`docs/`)
+`docs/como-funciona.md` (arquitectura) · `docs/personalizar.md` (qué pedirle a Claude) ·
+`docs/ir-a-produccion.md` (número propio, en lenguaje llano). Están enlazados desde
+README y GUIA: si cambias la ruta de producción, se actualizan los tres a la vez.
+
 ## La frontera del kit (regla para TODA decisión de alcance)
 **¿Es parte de "primer agente vivo"? → completo, guiado y soportado (Paso 1).**
 **¿Es "operar un sistema de negocio" (citas, reportes, documentos, integraciones)? →

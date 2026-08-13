@@ -82,6 +82,13 @@ Guarda progreso. Enséñale un resumen corto de lo que entendiste y pídele que 
 > Ahora el número. Vamos a usar uno de prueba, gratis y sin verificar nada: le vas a
 > escribir tú desde tu WhatsApp y te va a contestar tu agente.
 
+0. **Primero comprueba que tienes la herramienta de Zernio** — en una máquina recién
+   estrenada no está, y sin esto el paso siguiente muere con `command not found`:
+   ```bash
+   zernio --version || npm install -g @zernio/cli
+   ```
+   Si el `install -g` falla por permisos, no pelees: usa `npx @zernio/cli <comando>` en
+   todos los comandos de esta fase. (`wrangler` no necesita esto: siempre va con `npx`.)
 1. Pídele que cree su cuenta en **zernio.com** (gratis, sin tarjeta) y te avise.
 2. Corre `zernio auth:login`. Se abre su navegador y solo aprueba. Si no abre, pásale la URL.
 3. Pídele **su número de WhatsApp con lada** (ej. +52 55...).
@@ -146,7 +153,9 @@ Dile lo que acaba de pasar, en su idioma:
 
 ## Fase 6 · La prueba automática (2 min)
 
-Corre `POST https://<url>/prueba?clave=<CLAVE_PANEL>`. Son 8 pruebas con evidencia real.
+Corre `POST https://<url>/prueba?clave=<CLAVE_PANEL>`. Son 8 pruebas con evidencia real
+(9 si el negocio encendió Conocimiento). No cites el número: lee `pruebas[]` y reporta
+lo que traiga.
 
 **No le digas "listo" hasta que `listo` sea `true`.** Si algo sale en rojo:
 
@@ -224,5 +233,43 @@ Y dile cómo cambiar cosas, porque es lo que lo hace suyo:
 
 Al final, y solo al final, el siguiente paso honesto:
 > Este número es de prueba: sirve para que veas tu agente funcionando. Cuando quieras
-> ponerlo a atender clientes de verdad, se le conecta un número propio — te explico cuando
-> quieras.
+> ponerlo a atender clientes de verdad, se le conecta un número propio — dímelo y te
+> guío.
+
+Si acepta, **te vas a la Fase 9** (aquí abajo). No lo mandes a `/conectar`.
+
+---
+
+## Fase 9 · El número propio (solo si lo pide)
+
+**Cuándo entras aquí:** la persona dice *"quiero conectar mi propio número"*, *"quiero
+atender clientes de verdad"*, *"cómo salgo del número de prueba"*, *"quiero pasar a
+producción"*. Es la ruta que prometen `docs/ir-a-produccion.md`, la guía de instalación
+y el cierre de la Fase 8 — **atiéndela tú, aquí**. No mandes a `/conectar`: esa es del
+playground avanzado y va de Composio y otros canales, no del número de WhatsApp.
+
+Comandos verificados y la tabla de precios: `referencias/zernio.md` → *Número propio
+(producción)*.
+
+**Antes de tocar nada, dile las dos cosas que le van a doler si las descubre después:**
+
+1. **No hay coexistencia.** Un número en Cloud API deja de vivir en la app de WhatsApp
+   Business del celular. Si el negocio ya atiende a diario con ese número, migrarlo
+   significa dejar de contestar desde el teléfono: el panel pasa a ser su celular.
+   Casi siempre lo sano es **un número nuevo** para el agente.
+2. **Cuesta dinero, y no es del kit.** Es la renta mensual del número (de $3 a $21 USD
+   según el país) más lo que WhatsApp cobra por conversación. Enséñale el precio de su
+   país con `list-whats-app-number-countries` antes de que decida.
+
+**La compra la autoriza y la corre él.** Nunca ejecutes
+`purchase-whats-app-phone-number` por tu cuenta: enseña el precio, espera un sí explícito.
+Igual con el `--accessToken` del camino BYO: que lo pegue él, y no lo repitas en el chat.
+
+**El orden:** elegir país y ver precio → comprar (él) o traer su WABA → KYC si el país lo
+pide → verificar con `get-whats-app-number-info` que quedó `CONNECTED` → cambiar
+`ZERNIO_ACCOUNT_ID` → **crear el webhook de la cuenta nueva y borrar el del sandbox**
+(si no, dos agentes reciben lo mismo) → publicar → esperar ~20 s → autoprueba.
+
+**No está listo hasta que alguien que NO activó el sandbox le escribe y el agente
+contesta.** Ese es el único resultado que prueba que salió del cascarón: antes solo
+hablaba con un teléfono.
