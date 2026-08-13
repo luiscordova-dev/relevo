@@ -12,7 +12,7 @@ genera el agente, lo despliega en tu Cloudflare y **no te dice "listo" hasta que
 pruebas pasan con evidencia** — incluido el aviso de Telegram confirmado con `message_id`.
 
 ```bash
-git clone https://github.com/USUARIO/relevo.git
+git clone https://github.com/luiscordova/relevo.git
 cd relevo
 claude
 # → /crear-agente
@@ -46,23 +46,40 @@ claude
 | `/afinar` | Lee las conversaciones reales, encuentra lo que no supo contestar, propone el arreglo con antes/después. Los datos los pones tú: ni el mantenimiento inventa |
 | `/conectar` | Composio de cero a **probado**: la conexión no está lista cuando se configuró, sino cuando el evento apareció en tu calendario real |
 | `/agregar-capacidad` | Describes la capacidad en español; la escribe con el molde `local:`, le escribe su prueba y verifica que nada más se rompió |
+| `/cargar-conocimiento` | Le das el archivo crudo (CSV, export, PDF pegado); Claude lo **reestructura** para que la búsqueda lo encuentre, lo indexa y lo prueba con preguntas de cliente |
 
-## Qué hace el agente
+## Qué hace el agente — en dos niveles
 
-Contesta 24/7 con la información del negocio · entiende **notas de voz** (Whisper) y
+**Nivel 1 · Lo que sale de fábrica** (los 30 minutos; solo Cloudflare + Zernio + Telegram):
+contesta 24/7 con la información del negocio · entiende **notas de voz** (Whisper) y
 **fotos** (Llama Vision) · **no inventa** — si no sabe, lo dice y captura · captura leads
 y **avisa por Telegram al momento** · escala a humano cuando lo piden o hay queja (y se
-calla para que entres tú) · ejecuta herramientas de Composio (agenda, CRM, Slack, 1000+
-apps) · panel de operación con inbox, toma de control, etiquetas, recordatorios y notas
-privadas · reporte diario por correo.
+calla para que entres tú) · panel de operación con inbox, toma de control, etiquetas,
+recordatorios y notas privadas.
+
+**Nivel 2 · El siguiente nivel** (opcional; cada mejora es una conversación con su skill,
+y termina probada, no prometida):
+- 🗓️ **Que HAGA cosas** — agenda en Google Calendar, escribe en Notion, avisa a Slack
+  (1,000+ apps vía Composio). El agente consulta huecos ANTES de ofrecer, y una guarda en
+  código verifica que jamás diga "ya quedó agendado" sin haberlo hecho
+- 📚 **Conocimiento (RAG)** — cárgale el menú de 12 páginas o el catálogo de 200 productos;
+  Claude lo reestructura, lo indexa en Vectorize y lo prueba con preguntas de cliente real.
+  Con información chica ni se enciende: la complejidad se paga sola cuando hace falta
+- 📊 **Reporte diario por correo** — sale por tu propio Gmail (misma conexión de Composio)
+  o por Resend
+- 🛠️ **Capacidades propias** — "que calcule el envío por código postal": la describes en
+  español y queda escrita, conectada y con su prueba
+
+El propio `/crear-agente` te ofrece el menú al final, y el panel trae cada mejora con su
+prompt listo para copiar ("DÍSELO A CLAUDE").
 
 ## Stack
 
 **Cloudflare Workers** (runtime) · **Workers AI** — Llama 3.3 70B por default, elegido por
 bake-off contra 4 modelos, con GPT-OSS-120B de suplente y BYOK opcional (OpenAI/Anthropic)
-· **D1** (datos) · **Zernio** (WhatsApp — sandbox gratis para arrancar, tu número para
-producción) · **Telegram** (avisos) · **Composio** (herramientas) · **Resend** (reporte
-diario, opcional).
+· **D1** (datos) · **Vectorize + bge-m3** (conocimiento, se enciende por umbral) · **Zernio** (WhatsApp — sandbox gratis para arrancar, tu número para
+producción) · **Telegram** (avisos) · **Composio** (herramientas y reporte por Gmail, opcional) · **Resend**
+(alternativa para el reporte, opcional).
 
 - **[Cómo funciona por dentro](docs/como-funciona.md)** — arquitectura y decisiones
 - **[Personalizar](docs/personalizar.md)** · **[Ir a producción](docs/ir-a-produccion.md)**

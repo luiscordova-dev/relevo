@@ -187,15 +187,35 @@ Si algo no funcionó, `referencias/fallos.md` y arréglalo tú.
 
 ---
 
-## Fase 8 · El extra opcional (3 min)
+## Fase 8 · El siguiente nivel (opcional, y solo cuando todo funciona)
 
-Solo cuando todo lo demás funciona:
-> ¿Quieres que cada noche te llegue por correo un resumen del día — cuánta gente escribió,
-> cuántos interesados, quién quedó pendiente? Son 2 minutos más y también es gratis.
+El agente ya está completo: contesta, no inventa, captura, avisa, oye, ve, y tiene su
+panel. **Aquí puedes parar y está perfecto.** Pero ofrécele el menú, una sola vez:
 
-Si dice que sí: cuenta en **resend.com**, su llave a `RESEND_API_KEY`, su correo a
-`CORREO_DUENO`, publica y prueba con `POST /reporte?clave=<clave>`. Si dice que no, nada
-se rompe: el reporte simplemente no se manda.
+> Tu agente ya trabaja. ¿Quieres llevarlo al siguiente nivel? Te guío paso a paso —
+> cada mejora son unos minutos y terminan probadas, no prometidas:
+>
+> 1. 🗓️ **Que HAGA cosas, no solo conteste** — agendar en tu Google Calendar, escribir
+>    en Notion, avisar a Slack… (1,000+ apps)
+> 2. 📚 **Cargarle tu catálogo completo** — el menú de 12 páginas, la lista de 200
+>    productos; el agente encuentra el dato exacto
+> 3. 📊 **Reporte diario por correo** — cada noche, cuánta gente escribió y quién quedó
+>    pendiente
+> 4. 🛠️ **Una capacidad única de tu negocio** — "que calcule el envío por código postal",
+>    "que consulte el estatus de un pedido"
+
+Cada opción tiene su skill, y la skill carga con la complejidad (esquemas, llaves,
+pruebas) para que la persona solo diga qué quiere:
+
+| Eligió | Corre | Qué necesita la persona |
+|---|---|---|
+| 1 · Hacer cosas | `/conectar` | Cuenta de Composio + su API key del dashboard (`ak_…`) |
+| 2 · Catálogo | `/cargar-conocimiento` | Solo el archivo (tú lo reestructuras e indexas) |
+| 3 · Reporte | `/conectar` (Gmail vía Composio) o Resend | La misma llave de Composio, o una cuenta de Resend |
+| 4 · Capacidad propia | `/agregar-capacidad` | Describirla en español |
+
+Si dice "luego", perfecto: recuérdale que el panel (pestaña **Capacidades**) tiene cada
+mejora con su botón "DÍSELO A CLAUDE — copiar" para cuando quiera.
 
 ---
 

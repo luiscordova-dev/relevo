@@ -186,6 +186,55 @@ export async function razonar(env, mensajes, { conversacionId, usuario } = {}) {
   if (pedidoDeHerramienta(crudo)) {
     await registrarEvento(env, "error", "El cerebro se quedó pidiendo herramientas en ciclo");
     crudo = "Déjame confirmarlo con el equipo y te digo en un momento. ¿Me pasas tu nombre?";
+    return { crudo, herramientas };
+  }
+
+  // ── Guarda contra la promesa fantasma ────────────────────────────────────
+  // Visto en vivo: el agente consultó los horarios libres y contestó "te dejo
+  // agendada la cita" SIN haber llamado la herramienta que agenda. El cliente se
+  // presenta y no hay nada. Pedirle en el prompt que no lo haga no alcanza —
+  // esto se comprueba en código, contra lo que de verdad se ejecutó.
+  if (prometeSinRespaldo(crudo, herramientas)) {
+    await registrarEvento(env, "error", "Prometió una acción que no ejecutó; se le pidió corregir");
+    const correccion = [
+      ...interna,
+      { role: "assistant", content: crudo },
+      {
+        role: "user",
+        content: "[AVISO DEL SISTEMA] Escribiste que la acción quedó hecha, pero NO usaste " +
+          "la herramienta que la hace. Solo consultar no es hacer. Si de verdad puedes " +
+          "hacerla, pide AHORA la herramienta correcta. Si te falta algún dato, pídeselo " +
+          "al cliente. Si no puedes, dile que el equipo se lo confirma — pero nunca " +
+          "afirmes que ya quedó.",
+      },
+    ];
+    crudo = await pensar(env, correccion, { conversacionId });
+
+    const pedido = pedidoDeHerramienta(crudo);
+    if (pedido) {
+      const resultado = await ejecutar(env, pedido, usuario);
+      await registrarEvento(env, "herramienta", {
+        id: pedido.id, ok: resultado.ok, error: resultado.error,
+      });
+      herramientas.push({ id: pedido.id, ok: resultado.ok, error: resultado.error });
+      correccion.push({ role: "assistant", content: crudo });
+      correccion.push(resultadoParaElCerebro(pedido.id, resultado));
+      crudo = await pensar(env, correccion, { conversacionId });
+    }
+    // Segunda red: si aun así insiste en prometer, se cambia por algo honesto.
+    if (prometeSinRespaldo(crudo, herramientas)) {
+      crudo = "Déjame confirmarlo con el equipo y en un momento te aviso. ¿Me dejas tu nombre?";
+    }
   }
   return { crudo, herramientas };
+}
+
+// Verbos con los que el agente afirma que YA hizo algo. Consultar no cuenta:
+// "revisé si hay lugar" es cierto; "te lo aparté" solo es cierto si lo apartó.
+const PROMESAS = /\b(agendad[oa]|agend[ée]|apartad[oa]|apart[ée]|reservad[oa]|reserv[ée]|confirmad[oa]|confirm[ée]|registrad[oa]|registr[ée]|list[oa],? (?:tu|su) (?:cita|lugar|reservaci[óo]n)|qued[óo] (?:agendad|apartad|reservad))/i;
+
+/** Dijo que lo hizo, pero ninguna herramienta lo respalda. */
+function prometeSinRespaldo(texto, herramientas) {
+  if (!PROMESAS.test(String(texto || ""))) return false;
+  return !herramientas.some((h) => h.ok);
 }
