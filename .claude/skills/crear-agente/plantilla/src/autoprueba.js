@@ -7,6 +7,7 @@ import { AUDIO_PRUEBA_B64, IMAGEN_PRUEBA_B64, b64ABytes } from "./archivos-prueb
 import { guardarLead, leadDeConversacion, pausar, obtenerConversacion, registrarEvento } from "./datos.js";
 import { negocio } from "../negocio.js";
 import { diagnosticar } from "./calidad.js";
+import { ragActivo, buscarFragmentos } from "./conocimiento.js";
 
 /** Un fallo que ya sabe cuál es su propio arreglo. Evita mandar al usuario al lugar equivocado. */
 function fallo(mensaje, arregla) {
@@ -173,6 +174,34 @@ export async function autoprueba(env) {
     if (!res.ok) throw new Error(`Zernio respondió ${res.status}`);
     return { evidencia: "Llave válida y número asignado" };
   }, "Vuelve a generar la llave de Zernio y guárdala de nuevo.");
+
+  // 8 · ¿El conocimiento se recupera? Solo si está encendido: un agente que no usa
+  // documentos no debe fallar una prueba de algo que no tiene.
+  if (await ragActivo(env)) {
+    await correr("📚 Encuentra en tus documentos", async () => {
+      const doc = await env.DB.prepare(
+        "SELECT titulo, contenido FROM documentos WHERE trozos > 0 ORDER BY actualizado_en DESC")
+        .first();
+      if (!doc) {
+        throw fallo("Hay documentos pero ninguno quedó indexado",
+          "Entra al panel → Conocimiento y dale a 'Reindexar todo'. Si sigue fallando, " +
+          "revisa que el índice de Vectorize exista y que el binding KB esté en wrangler.jsonc.");
+      }
+      // Se busca con una frase sacada del propio documento: si el índice está sano,
+      // tiene que devolver justo ese pedazo.
+      const sonda = String(doc.contenido).split(/\n\s*\n/).find((b) => b.length > 60) || doc.contenido;
+      const fragmentos = await buscarFragmentos(env, sonda.slice(0, 200), 3);
+      if (!fragmentos.length) {
+        throw fallo("El índice no devolvió nada para un texto que SÍ está en tus documentos",
+          "Los fragmentos tardan unos segundos en quedar disponibles después de guardarlos. " +
+          "Si ya pasó un minuto, reindexa desde el panel → Conocimiento.");
+      }
+      return {
+        evidencia: `Encontró "${fragmentos[0].titulo || doc.titulo}" ` +
+          `(parecido ${(fragmentos[0].score * 100).toFixed(0)}%)`,
+      };
+    }, "Reindexa desde el panel → Conocimiento.", 1);
+  }
 
   // Limpieza: el lead de prueba no se queda en el panel del dueño.
   await env.DB.prepare("DELETE FROM leads WHERE conversacion_id = ?").bind(convPrueba).run().catch(() => {});

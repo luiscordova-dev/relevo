@@ -2,6 +2,7 @@
 
 import { negocio } from "../negocio.js";
 import { bloqueDeHerramientas } from "./herramientas.js";
+import { bloqueDeConocimiento, infoEsGrande, buscarFragmentos } from "./conocimiento.js";
 import { registrarUso, leerAjustes, ahoraMes } from "./datos.js";
 
 const MARCA_INICIO = "<<<DATOS>>>";
@@ -13,13 +14,21 @@ const TONOS = {
   divertido: "Relajado y con chispa, de tú. Emojis bienvenidos, sin pasarse.",
 };
 
-export function construirSystemPrompt(env) {
+export function construirSystemPrompt(env, fragmentos = []) {
   const reglasExtra = (negocio.reglasExtra || []).map((r) => `- ${r}`).join("\n");
+
+  // Cuando la información del negocio ya no cabe cómoda Y el índice la recuperó,
+  // no se manda completa: van solo los fragmentos que importan para esta pregunta.
+  // Enterrar el dato a media lista es lo que hace que el agente diga "no lo tengo".
+  const infoIndexada = infoEsGrande() && fragmentos.length > 0;
+  const loQueSabe = infoIndexada
+    ? "Lo que necesitas para contestar viene abajo, en INFORMACIÓN RELEVANTE."
+    : negocio.informacion;
 
   return `Eres ${negocio.nombreAgente}, quien atiende el WhatsApp de ${negocio.nombreNegocio}.
 
 ## LO QUE SABES (tu única fuente de verdad)
-${negocio.informacion}
+${loQueSabe}
 
 ## CÓMO HABLAS
 ${TONOS[negocio.tono] || TONOS.cercano}
@@ -84,6 +93,7 @@ Reglas del protocolo:
 - Si no sabes el nombre REAL de la persona, NO mandes el bloque de lead: primero pídeselo.
   Jamás pongas "desconocido", "cliente" ni nada inventado en el campo nombre.
 - El bloque es invisible para el cliente: no lo menciones ni lo expliques nunca.` +
+  bloqueDeConocimiento(fragmentos) +
   bloqueDeHerramientas(env || {});
 }
 
@@ -123,7 +133,15 @@ export function separarDatos(respuestaCruda) {
  * dueño conectó su propia llave, usa esa.
  */
 export async function pensar(env, mensajes, contexto = {}) {
-  const conSistema = [{ role: "system", content: construirSystemPrompt(env) }, ...mensajes];
+  // Los fragmentos se buscan con el último mensaje del cliente, que es la pregunta.
+  // Si no hay índice o falla, devuelve [] y todo sigue como siempre.
+  const fragmentos = contexto.fragmentos
+    ?? await buscarFragmentos(env, ultimaPreguntaDelCliente(mensajes));
+
+  const conSistema = [
+    { role: "system", content: construirSystemPrompt(env, fragmentos) },
+    ...mensajes,
+  ];
   const t0 = Date.now();
   const anotar = (modelo, uso, exacto) => registrarUso(env, {
     conversacionId: contexto.conversacionId, tipo: contexto.tipo || "cerebro",
@@ -200,4 +218,13 @@ async function llamarAnthropic(key, modelo, messages) {
       prompt_tokens: d.usage?.input_tokens, completion_tokens: d.usage?.output_tokens,
     },
   };
+}
+
+/** El último mensaje del cliente: con eso se busca en el conocimiento. */
+function ultimaPreguntaDelCliente(mensajes) {
+  for (let i = mensajes.length - 1; i >= 0; i--) {
+    const m = mensajes[i];
+    if (m.role === "user" && typeof m.content === "string") return m.content;
+  }
+  return "";
 }

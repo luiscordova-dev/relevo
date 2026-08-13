@@ -17,6 +17,7 @@ que corra comandos: tú los corres.
 | `/afinar` | Mejorar al agente con sus conversaciones reales |
 | `/conectar` | Composio (calendario, CRM, Slack…) y canales — todo termina probado |
 | `/agregar-capacidad` | Capacidades propias del negocio, con su prueba |
+| `/cargar-conocimiento` | Catálogos, menús y documentos largos: Claude los reestructura, indexa y prueba |
 
 ## Reglas de la casa
 - **Evidencia, no fe**: un aviso sin `message_id` no llegó; una prueba que no corriste no pasó.

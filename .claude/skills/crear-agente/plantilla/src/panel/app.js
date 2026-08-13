@@ -4,6 +4,9 @@ export const APP = String.raw`
 const CLAVE = new URLSearchParams(location.search).get('clave') || '';
 const api = (r, o) => fetch('/api/' + r + (r.includes('?') ? '&' : '?') + 'clave=' + encodeURIComponent(CLAVE), o)
   .then(x => x.json());
+const post = (r, datos) => api(r, {
+  method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(datos || {}),
+});
 
 // ── utilidades compartidas ──
 const esc = s => String(s == null ? '' : s).replace(/[<>&]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));

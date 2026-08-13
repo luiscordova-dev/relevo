@@ -2,12 +2,20 @@
 
 import { responder } from "./zernio.js";
 import { negocio } from "../negocio.js";
+import { viaDelReporte } from "./reporte.js";
+import { pensar, separarDatos } from "./cerebro.js";
+import { composioListo } from "./composio.js";
 import {
   listarConversaciones, hiloCompleto, cambiarPausa, guardarMensaje, cambiarCierre,
   ponerRecordatorio, guardarEtiquetas, etiquetasUsadas, obtenerConversacion,
   registrarEvento, PAUSA_INDEFINIDA, kpis, actividadPorDia, gasto, gastoPorDia,
   conteoEventos, leerAjustes, guardarAjuste, resumenDelDia,
+  listarDocumentos, leerDocumento, guardarDocumento, marcarIndexado, borrarDocumento,
 } from "./datos.js";
+import {
+  ragDisponible, ragActivo, indexarDocumento, borrarDelIndice, infoEsGrande, buscarFragmentos,
+  UMBRAL_BYTES, bytes,
+} from "./conocimiento.js";
 
 // Cuando el dueño contesta a mano, el agente se calla solo. Si nunca reactiva,
 // vuelve al día siguiente en lugar de quedarse mudo para siempre.
@@ -143,10 +151,98 @@ export async function apiInbox(request, env, url) {
       modeloVista: env.MODELO_VISTA || "@cf/meta/llama-3.2-11b-vision-instruct",
       herramientas: (negocio.herramientas || []).map((h) => ({ id: h.id, tool: h.tool, para: h.para })),
       canales: { whatsapp: !!env.ZERNIO_ACCOUNT_ID, telegramAvisos: !!env.TELEGRAM_CHAT_ID },
-      reporteCorreo: !!(env.RESEND_API_KEY && env.CORREO_DUENO),
+      composio: composioListo(env),
+      reporteCorreo: !!viaDelReporte(env).via,
+      reporteVia: viaDelReporte(env).via,
+      reporteMotivo: viaDelReporte(env).motivo,
       minutosPausa: Number(ajustes.minutos_pausa_escalacion) || 60,
       horasPausaContestar: Number(ajustes.horas_pausa_al_contestar) || HORAS_PAUSA_AL_CONTESTAR,
     });
+  }
+
+  // ── Conocimiento ──────────────────────────────────────────────────────────
+  if (ruta === "conocimiento") {
+    const [docs, activo] = await Promise.all([listarDocumentos(env), ragActivo(env)]);
+    return Response.json({
+      documentos: docs,
+      disponible: ragDisponible(env),
+      activo,
+      infoBytes: bytes(negocio.informacion),
+      umbral: UMBRAL_BYTES,
+      infoGrande: infoEsGrande(),
+    });
+  }
+
+  // Diagnóstico: qué fragmentos recupera el agente para una pregunta, con su
+  // puntaje. Sin esto, "el RAG funciona" es una creencia. Lo usa /autopsia.
+  if (ruta === "buscar") {
+    const q = url.searchParams.get("q") || "";
+    const fragmentos = await buscarFragmentos(env, q, Number(url.searchParams.get("k")) || 4);
+    return Response.json({ pregunta: q, fragmentos });
+  }
+
+  // Probador: le habla al agente sin gastar un mensaje de WhatsApp, y enseña QUÉ
+  // fragmentos usó para contestar. Sirve para comprobar un documento recién subido
+  // sin tener que escribirle desde el celular.
+  if (ruta === "probar" && request.method === "POST") {
+    const { texto } = await leerJson(request);
+    if (!String(texto || "").trim()) {
+      return Response.json({ ok: false, error: "Escribe algo que preguntarle." }, { status: 400 });
+    }
+    const t0 = Date.now();
+    const fragmentos = await buscarFragmentos(env, texto, 4);
+    const cruda = await pensar(env, [{ role: "user", content: String(texto).slice(0, 1000) }],
+      { tipo: "prueba", fragmentos });
+    const { visible, datos } = separarDatos(cruda);
+    return Response.json({
+      ok: true, respuesta: visible, datos, ms: Date.now() - t0,
+      fragmentos: fragmentos.map((f) => ({ titulo: f.titulo, score: f.score, texto: f.texto.slice(0, 300) })),
+    });
+  }
+
+  if (ruta === "documento-leer") {
+    const doc = await leerDocumento(env, Number(url.searchParams.get("id")));
+    return Response.json(doc || {});
+  }
+
+  if (ruta === "documento" && request.method === "POST") {
+    const { id, titulo, contenido, borrar } = await leerJson(request);
+
+    if (borrar && id) {
+      const previo = await leerDocumento(env, id);
+      const limpieza = await borrarDelIndice(env, id, previo?.trozos);
+      // Si el índice no soltó los fragmentos, el documento NO se borra de la base:
+      // mejor que siga visible en el panel a que desaparezca de la vista y siga
+      // contestando por detrás.
+      if (!limpieza.ok) {
+        return Response.json({ ok: false, error: `No se pudo quitar del índice: ${limpieza.error}` }, { status: 500 });
+      }
+      await borrarDocumento(env, id);
+      return Response.json({ ok: true, borrado: id });
+    }
+    if (!String(titulo || "").trim() || !String(contenido || "").trim()) {
+      return Response.json({ ok: false, error: "Falta el título o el contenido." }, { status: 400 });
+    }
+
+    const docId = await guardarDocumento(env, { id, titulo, contenido });
+    // Guardar e indexar son dos cosas: si el índice falla, el texto NO se pierde
+    // y el panel lo muestra como "sin indexar" en vez de mentir.
+    const previo = id ? await leerDocumento(env, id) : null;
+    const r = await indexarDocumento(env, { id: docId, titulo, contenido, trozos: previo?.trozos });
+    if (r.ok) await marcarIndexado(env, docId, r.trozos);
+    return Response.json({ ok: true, id: docId, indexado: r.ok, trozos: r.trozos || 0, error: r.error });
+  }
+
+  if (ruta === "reindexar" && request.method === "POST") {
+    const docs = await listarDocumentos(env);
+    const resultados = [];
+    for (const d of docs) {
+      const doc = await leerDocumento(env, d.id);
+      const r = await indexarDocumento(env, doc);
+      if (r.ok) await marcarIndexado(env, d.id, r.trozos);
+      resultados.push({ id: d.id, titulo: d.titulo, ok: r.ok, trozos: r.trozos || 0, error: r.error });
+    }
+    return Response.json({ ok: true, resultados });
   }
 
   if (ruta === "ajustes") {

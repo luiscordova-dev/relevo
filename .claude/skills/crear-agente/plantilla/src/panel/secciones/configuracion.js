@@ -97,9 +97,10 @@ SECCIONES.configuracion = {
     document.getElementById('cfConexiones').innerHTML =
       linea('📱', 'WhatsApp', fl.canales.whatsapp, 'CONECTADO', 'SIN CONECTAR') +
       linea('📨', 'Avisos por Telegram', fl.canales.telegramAvisos, 'ACTIVOS', 'SIN CONECTAR') +
-      linea('🧰', 'Herramientas (Composio)', fl.herramientas.length,
-            fl.herramientas.length + ' CONECTADAS', 'NINGUNA') +
-      linea('📊', 'Reporte diario por correo', fl.reporteCorreo, 'ACTIVO', 'APAGADO') +
+      linea('🧰', 'Herramientas (Composio)', fl.composio,
+            fl.herramientas.length + ' DECLARADAS', 'SIN LLAVE') +
+      linea('📊', 'Reporte diario por correo', fl.reporteCorreo,
+            'POR ' + String(fl.reporteVia || '').toUpperCase(), 'APAGADO') +
       linea('🧠', 'Cerebro', true, fl.cerebroPropio ? 'LLAVE PROPIA' : 'INCLUIDO', '');
   },
 };

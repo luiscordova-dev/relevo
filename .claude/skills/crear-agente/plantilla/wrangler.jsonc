@@ -17,6 +17,12 @@
     }
   ],
 
+  // 📚 Conocimiento (opcional). Solo hace falta cuando la información del negocio ya
+  // no cabe cómoda en el prompt o el dueño quiere subir documentos. Sin esto el agente
+  // funciona igual; la sección Conocimiento del panel te dice cómo encenderlo.
+  //   npx wrangler vectorize create NOMBRE-DEL-AGENTE-kb --dimensions=1024 --metric=cosine
+  // "vectorize": [{ "binding": "KB", "index_name": "NOMBRE-DEL-AGENTE-kb" }],
+
   // Cada 15 min revisa recordatorios; a las 3:00 am de México manda el reporte diario.
   "triggers": { "crons": ["*/15 * * * *"] },
 

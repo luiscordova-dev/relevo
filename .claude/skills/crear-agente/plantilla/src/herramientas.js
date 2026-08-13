@@ -5,8 +5,8 @@
 // Es un loop de agente de verdad — no una plantilla con huecos.
 
 import { negocio } from "../negocio.js";
+import { ejecutarComposio } from "./composio.js";
 
-const API = "https://backend.composio.dev/api/v3";
 const MARCA_INICIO = "<<<HERRAMIENTA>>>";
 const MARCA_FIN = "<<<FIN>>>";
 
@@ -90,27 +90,10 @@ export async function ejecutar(env, { id, datos }, usuario) {
     }
   }
 
-  try {
-    const r = await fetch(`${API}/tools/execute/${encodeURIComponent(config.tool)}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-api-key": env.COMPOSIO_API_KEY },
-      body: JSON.stringify({
-        arguments: { ...(config.fijos || {}), ...datos },
-        user_id: env.COMPOSIO_USER_ID || usuario || "dueno",
-      }),
-    });
-    const cuerpo = await r.json().catch(() => ({}));
-
-    if (!r.ok || cuerpo?.error) {
-      const msg = cuerpo?.error?.message || cuerpo?.message || `HTTP ${r.status}`;
-      return { ok: false, error: msg };
-    }
-    // Composio devuelve el payload útil en data (a veces anidado en response_data).
-    const data = cuerpo?.data?.response_data ?? cuerpo?.data ?? cuerpo;
-    return { ok: true, data };
-  } catch (e) {
-    return { ok: false, error: String(e.message || e) };
-  }
+  // Las conexiones son del DUEÑO del negocio — nunca del cliente que escribe.
+  // (Ver la nota sobre user_id en composio.js: mandar el teléfono de quien
+  // escribe deja al agente con CERO integraciones, sin un error que lo diga.)
+  return await ejecutarComposio(env, config.tool, { ...(config.fijos || {}), ...datos });
 }
 
 /** El resultado, en el formato que el cerebro entiende para su segunda vuelta. */

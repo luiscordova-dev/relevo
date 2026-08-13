@@ -12,7 +12,7 @@
 import { atender } from "./agente.js";
 import { renderPanel } from "./panel/index.js";
 import { apiInbox } from "./inbox.js";
-import { enviarReporteDiario, dispararRecordatorios } from "./reporte.js";
+import { enviarReporteDiario, dispararRecordatorios, viaDelReporte } from "./reporte.js";
 import { registrarEvento } from "./datos.js";
 import { autoprueba } from "./autoprueba.js";
 import { diagnosticar } from "./calidad.js";
@@ -163,7 +163,8 @@ function salud(env) {
       : env.ANTHROPIC_API_KEY ? "llave propia (Anthropic)"
       : `incluido (${env.MODELO_CEREBRO || "@cf/meta/llama-3.3-70b-instruct-fp8-fast"})`,
     opcionales: {
-      reportePorCorreo: listo(env.RESEND_API_KEY && env.CORREO_DUENO),
+      herramientas: listo(env.COMPOSIO_API_KEY),
+      reportePorCorreo: viaDelReporte(env).via || "apagado",
     },
   };
 }

@@ -333,3 +333,40 @@ export async function resumenDelDia(env, desde) {
     ).bind(desde).all()).results || [],
   };
 }
+
+// ── DOCUMENTOS (Conocimiento) ────────────────────────────────────────────────
+
+export async function listarDocumentos(env) {
+  const r = await env.DB.prepare(
+    `SELECT id, titulo, trozos, indexado_en, actualizado_en, LENGTH(contenido) bytes
+       FROM documentos ORDER BY actualizado_en DESC`).all().catch(() => ({ results: [] }));
+  return r.results || [];
+}
+
+export async function leerDocumento(env, id) {
+  return await env.DB.prepare("SELECT * FROM documentos WHERE id = ?").bind(id).first();
+}
+
+/** Crea o actualiza. Devuelve el id, que es lo que se necesita para indexar. */
+export async function guardarDocumento(env, { id, titulo, contenido }) {
+  const ahora = Date.now();
+  if (id) {
+    await env.DB.prepare(
+      `UPDATE documentos SET titulo = ?, contenido = ?, actualizado_en = ? WHERE id = ?`)
+      .bind(titulo, contenido, ahora, id).run();
+    return id;
+  }
+  const r = await env.DB.prepare(
+    `INSERT INTO documentos (titulo, contenido, creado_en, actualizado_en) VALUES (?, ?, ?, ?)`)
+    .bind(titulo, contenido, ahora, ahora).run();
+  return r.meta?.last_row_id;
+}
+
+export async function marcarIndexado(env, id, trozos) {
+  await env.DB.prepare("UPDATE documentos SET trozos = ?, indexado_en = ? WHERE id = ?")
+    .bind(trozos, Date.now(), id).run();
+}
+
+export async function borrarDocumento(env, id) {
+  await env.DB.prepare("DELETE FROM documentos WHERE id = ?").bind(id).run();
+}

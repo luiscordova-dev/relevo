@@ -82,3 +82,17 @@ CREATE TABLE IF NOT EXISTS ajustes (
   valor     TEXT,
   guardado  INTEGER NOT NULL
 );
+
+-- Documentos: lo que el agente sabe cuando ya no cabe en el prompt (menús, catálogos,
+-- políticas). Se indexan en Vectorize al guardarlos; el texto vive aquí para poder
+-- editarlo y reindexar sin perder nada.
+CREATE TABLE IF NOT EXISTS documentos (
+  id             INTEGER PRIMARY KEY AUTOINCREMENT,
+  titulo         TEXT NOT NULL,
+  contenido      TEXT NOT NULL,
+  -- Cuántos trozos quedaron en el índice. 0 = guardado pero SIN indexar (algo falló).
+  trozos         INTEGER NOT NULL DEFAULT 0,
+  indexado_en    INTEGER,
+  creado_en      INTEGER NOT NULL,
+  actualizado_en INTEGER NOT NULL
+);

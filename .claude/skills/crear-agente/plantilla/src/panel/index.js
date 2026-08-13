@@ -18,6 +18,7 @@ import * as resumen from "./secciones/resumen.js";
 import * as conversaciones from "./secciones/conversaciones.js";
 import * as flujo from "./secciones/flujo.js";
 import * as capacidades from "./secciones/capacidades.js";
+import * as conocimiento from "./secciones/conocimiento.js";
 import * as costos from "./secciones/costos.js";
 import * as configuracion from "./secciones/configuracion.js";
 
@@ -32,6 +33,7 @@ const SECCIONES = [
   { grupo: "Mi agente" },
   { id: "flujo", icono: "🧬", titulo: "Flujo", mod: flujo },
   { id: "capacidades", icono: "⚡", titulo: "Capacidades", mod: capacidades },
+  { id: "conocimiento", icono: "📚", titulo: "Conocimiento", mod: conocimiento },
   { grupo: "Análisis" },
   { id: "costos", icono: "💰", titulo: "Costos", mod: costos },
   { grupo: "" },
