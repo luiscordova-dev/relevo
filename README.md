@@ -1,15 +1,32 @@
 # Relevo
 
-**De cero a un agente de WhatsApp en producción, en 30 minutos.**
+**Con este repo vas a lograr SOLO esto: un agente mínimo en producción — responde
+FAQs sin alucinar, captura interesados y te avisa con handoff a humano — en ±30
+minutos, en tu propio Cloudflare.** Lo demás que encuentres aquí es playground.
 
-Un agente real, no un eco de API: webhook firmado con HMAC, transcripción de notas de voz,
-visión, captura de leads con evidencia de entrega, escalación a humano, herramientas vía
-Composio, evals propias con **auto-reparación de modelo**, panel de operación incluido y
-medición de costo exacta al neuron. **Cero dependencias de npm en el runtime.**
+El camino completo, en un vistazo:
+
+1. **👣 Paso 1 — Tu primer agente en 30 minutos** (guiado, soportado, obligatorio)
+2. **🧪 Paso 2 (opcional) — Juega con lo avanzado** (ejemplos sin soporte: léelos, rómpelos, haz forks)
+3. **🎓 Paso 3 — [Si quieres aprender a crear agentes de IA y automatizaciones con Claude Code en serio, anótate a la lista](https://tally.so/r/EkGZoL?origen=readme)**
+
+---
+
+## 👣 Paso 1 · Tu primer agente en 30 minutos
+
+Un agente real, no un eco de API: webhook firmado con HMAC validado en tiempo constante,
+transcripción de notas de voz, visión, captura de leads con evidencia de entrega,
+escalación a humano, buffer de mensajes, evals propias con **auto-reparación de modelo**,
+panel de operación con sesión, y medición de costo exacta al neuron. **Cero dependencias
+de npm en el runtime.**
 
 Lo construyes conversando: una skill de Claude Code te entrevista sobre el negocio,
-genera el agente, lo despliega en tu Cloudflare y **no te dice "listo" hasta que sus 8
+genera el agente, lo despliega en tu Cloudflare y **no te dice "listo" hasta que sus
 pruebas pasan con evidencia** — incluido el aviso de Telegram confirmado con `message_id`.
+
+**Necesitas:** [Claude Code](https://claude.com/claude-code) · cuenta de
+[Cloudflare](https://cloudflare.com) (gratis) · cuenta de [Zernio](https://zernio.com)
+(WhatsApp, sandbox gratis) · [Telegram](https://telegram.org). Sin tarjeta.
 
 ```bash
 git clone https://github.com/luiscordova-dev/relevo.git
@@ -18,82 +35,95 @@ claude
 # → /crear-agente
 ```
 
+Eso es todo lo que tecleas: la skill corre los comandos, tú contestas la entrevista.
+
 > **La letra chica, de frente:** en 30 minutos está en producción y contestando con la
-> información que le diste. Dejarlo fino para clientes reales pide lo de siempre: probarlo
-> como cliente, completar su información y correr `/afinar` la primera semana. Los kits que
-> prometen "listo al 100% sin tocar nada" es exactamente lo que esto no es.
+> información que le diste. Dejarlo fino para clientes reales pide lo de siempre:
+> probarlo como cliente, completar su información y afinarlo la primera semana. Los kits
+> que prometen "listo al 100% sin tocar nada" son exactamente lo que esto no es.
 
----
+### Qué recibe el Paso 1 (completo y soportado)
 
-## Por qué está mejor hecho que el promedio
+Contesta 24/7 con la información del negocio · entiende **notas de voz** (Whisper) y
+**fotos** (Llama Vision) · **no inventa** — si no sabe, lo dice y captura · captura leads
+y **avisa por Telegram al momento**, con evidencia de entrega · **handoff a humano**
+cuando lo piden o hay queja (y se calla para que entres tú) · **buffer de mensajes**
+configurable (la gente escribe en ráfaga; el agente agrupa y contesta una vez) ·
+**memoria de conversación** · usa el **nombre del perfil de WhatsApp** para saludar, sin
+darlo por bueno como lead · **panel de operación** con inicio/cierre de sesión (cookie
+HMAC, nada de claves en la URL), inbox con toma de control, etiquetas, recordatorios,
+notas privadas, switches de capacidades en caliente y costos exactos.
+
+### Por qué está mejor hecho que el promedio
 
 | | |
 |---|---|
 | **La captura no depende de tool-calling** | El modelo emite un bloque estructurado; un parser determinista (con rescate por regex) ejecuta el guardado y el aviso. Menos magia, cero avisos fantasma |
 | **Evidencia, no fe** | Un aviso "enviado" sin `message_id` de Telegram cuenta como NO entregado, y el panel lo marca. Si el aviso falla, el lead se guarda igual |
-| **Evals con auto-reparación** | El agente corre 6 escenarios contra sí mismo; si su modelo no da el ancho, prueba el suplente y devuelve una acción aplicable (`cambiar-modelo` / `revisar-informacion` / `usar-llave-propia`) |
-| **Seguridad de serie** | Firma HMAC del webhook validada en tiempo constante, filtro por cuenta (los webhooks de Zernio son account-wide), idempotencia por `platformMessageId`, secretos fuera del código |
-| **Costo exacto, no estimado** | Workers AI devuelve `neurons` por llamada y todo se registra. Una conversación típica: ~$0.004 USD. Con llave propia (OpenAI/Anthropic) se registran tokens y se marca como estimado |
-| **Un solo Worker** | Agente + panel + API + cron en un deploy. Sin build, sin `node_modules`. El panel se modifica pidiéndoselo a Claude en español |
+| **Evals con auto-reparación** | El agente corre sus escenarios contra sí mismo; si su modelo no da el ancho, prueba el suplente y devuelve una acción aplicable |
+| **Seguridad de serie** | Firma HMAC en tiempo constante, filtro por cuenta (los webhooks de Zernio son account-wide), idempotencia por `platformMessageId`, secretos fuera del código |
+| **Costo exacto, no estimado** | Workers AI devuelve `neurons` por llamada y todo se registra. Una conversación típica: ~$0.004 USD |
+| **Un solo Worker** | Agente + panel + API + cron en un deploy. Sin build, sin `node_modules`. Se modifica pidiéndoselo a Claude en español |
 
-## Las skills — operan sobre el agente desplegado, no sobre teoría
+### Las skills del Paso 1
 
 | Skill | Qué hace |
 |---|---|
-| `/crear-agente` | La entrevista → genera → despliega → **prueba con evidencia**. CLI-first: nadie copia API keys a mano |
-| `/autopsia` | Pegas un chat que salió mal → lo busca en la D1 real → reconstruye el turno → causa raíz → arreglo mínimo → re-verifica |
-| `/auditoria` | Semáforo de seguridad (llaves en código, firma, secretos) y de costos (neurons reales, modelo correcto, picos) |
-| `/afinar` | Lee las conversaciones reales, encuentra lo que no supo contestar, propone el arreglo con antes/después. Los datos los pones tú: ni el mantenimiento inventa |
-| `/conectar` | Composio de cero a **probado**: la conexión no está lista cuando se configuró, sino cuando el evento apareció en tu calendario real |
-| `/agregar-capacidad` | Describes la capacidad en español; la escribe con el molde `local:`, le escribe su prueba y verifica que nada más se rompió |
-| `/cargar-conocimiento` | Le das el archivo crudo (CSV, export, PDF pegado); Claude lo **reestructura** para que la búsqueda lo encuentre, lo indexa y lo prueba con preguntas de cliente |
+| `/crear-agente` | La entrevista → genera → despliega → **prueba con evidencia** |
+| `/autopsia` | Pegas un chat que salió mal → lo busca en la D1 real → causa raíz → arreglo mínimo → re-verifica |
+| `/auditoria` | Semáforo de seguridad (llaves, firma, secretos) y de costos (neurons reales, picos) |
 
-## Qué hace el agente — en dos niveles
+## 🧪 Paso 2 (opcional) · Juega con lo avanzado
 
-**Nivel 1 · Lo que sale de fábrica** — ✅ **listo**
-(los 30 minutos; solo Cloudflare + Zernio + Telegram):
-contesta 24/7 con la información del negocio · entiende **notas de voz** (Whisper) y
-**fotos** (Llama Vision) · **no inventa** — si no sabe, lo dice y captura · captura leads
-y **avisa por Telegram al momento** · escala a humano cuando lo piden o hay queja (y se
-calla para que entres tú) · **buffer de mensajes** configurable (la gente escribe en
-ráfaga; el agente agrupa y contesta una vez) · **memoria de conversación** (los últimos 12
-mensajes entran al prompt) · usa el **nombre del perfil de WhatsApp** para saludar, sin
-darlo por bueno como lead · panel de operación con **inicio y cierre de sesión** (cookie
-firmada, nada de claves en la URL), inbox, toma de control, etiquetas, recordatorios,
-notas privadas, y **capacidades que se encienden y apagan con un switch** — aplican al
-momento, sin republicar, y el flujo en vivo lo refleja.
+**Ejemplos de cómo podrías extender este agente: citas, conocimiento con documentos,
+reportes, integraciones. Son ejemplos sin soporte: léelos, rómpelos, haz forks. Si solo
+quieres aprender del código por tu cuenta, termina aquí.** Nada de esto es necesario
+para el resultado de 30 minutos — todo degrada con gracia si no lo configuras.
 
-**Nivel 2 · El siguiente nivel** — 🚧 **beta abierta**
-(opcional; cada mejora es una conversación con su skill, y termina probada, no prometida.
-El código ya funciona — está verificado con citas reales en Google Calendar y correos
-reales por Gmail — y la experiencia guiada desde cero se está puliendo ahora mismo: se
-termina esta misma semana. Si algo te muerde, abre un issue y se arregla rápido):
-- 🗓️ **Que HAGA cosas** — agenda en Google Calendar, escribe en Notion, avisa a Slack
-  (1,000+ apps vía Composio). El agente consulta huecos ANTES de ofrecer, y una guarda en
-  código verifica que jamás diga "ya quedó agendado" sin haberlo hecho
-- 📚 **Conocimiento (RAG)** — cárgale el menú de 12 páginas o el catálogo de 200 productos;
-  Claude lo reestructura, lo indexa en Vectorize y lo prueba con preguntas de cliente real.
-  Con información chica ni se enciende: la complejidad se paga sola cuando hace falta
-- 📊 **Reporte diario por correo** — sale por tu propio Gmail (misma conexión de Composio)
-  o por Resend
-- 🛠️ **Capacidades propias** — "que calcule el envío por código postal": la describes en
-  español y queda escrita, conectada y con su prueba
+El playground vive en [`AVANZADO.md`](AVANZADO.md) (el mapa) y en
+[`src/avanzado/`](.claude/skills/crear-agente/plantilla/src/avanzado/) dentro de la
+plantilla:
 
-El propio `/crear-agente` te ofrece el menú al final, y el panel trae cada mejora con su
-prompt listo para copiar ("DÍSELO A CLAUDE").
+- 🗓️ **Citas reales** — el loop de herramientas vía Composio (`avanzado/composio.js` +
+  `herramientas.js`), con auto-descubrimiento del `user_id` y una guarda en código que
+  impide prometer "ya quedó agendado" sin haberlo hecho
+- 📚 **Conocimiento (RAG)** — `avanzado/conocimiento.js`: troceado por secciones,
+  Vectorize + bge-m3, filtro de relevancia medido contra el índice real
+- 📊 **Reporte diario** — `avanzado/reporte.js`: Gmail vía Composio o Resend
+- 🧰 Las skills marcadas **avanzado · referencia sin soporte**: `/conectar`,
+  `/cargar-conocimiento`, `/agregar-capacidad`, `/afinar`
+
+## 🎓 Paso 3 · Aprender el sistema
+
+Si después de montar tu agente quieres aprender el método completo — cómo decidir
+arquitectura, evals, evitar inventos, cuándo usar RAG, cómo probar en producción —
+ese es justo el salto que sigue.
+
+**[Si quieres aprender a crear agentes de IA y automatizaciones con Claude Code en
+serio, anótate a la lista →](https://tally.so/r/EkGZoL?origen=readme)**
+
+---
 
 ## Stack
 
-**Cloudflare Workers** (runtime) · **Workers AI** — Llama 3.3 70B por default, elegido por
-bake-off contra 4 modelos, con GPT-OSS-120B de suplente y BYOK opcional (OpenAI/Anthropic)
-· **D1** (datos) · **Vectorize + bge-m3** (conocimiento, se enciende por umbral) · **Zernio** (WhatsApp — sandbox gratis para arrancar, tu número para
-producción) · **Telegram** (avisos) · **Composio** (herramientas y reporte por Gmail, opcional) · **Resend**
-(alternativa para el reporte, opcional).
+**Cloudflare Workers** (runtime) · **Workers AI** — Llama 3.3 70B por default, elegido
+por bake-off contra 4 modelos, con GPT-OSS-120B de suplente y BYOK opcional
+(OpenAI/Anthropic) · **D1** (datos) · **Vectorize + bge-m3** (playground de conocimiento)
+· **Zernio** (WhatsApp — sandbox gratis) · **Telegram** (avisos) · **Composio** y
+**Resend** (playground).
 
 - **[Cómo funciona por dentro](docs/como-funciona.md)** — arquitectura y decisiones
 - **[Personalizar](docs/personalizar.md)** · **[Ir a producción](docs/ir-a-produccion.md)**
-- **[Guía para tu cliente](GUIA.md)** — si entregas el agente a alguien no técnico, esta es su guía
+- **[Guía para tu cliente](GUIA.md)** — si entregas el agente a alguien no técnico
+- **[AVANZADO.md](AVANZADO.md)** — el mapa del playground
 
 ## Licencia
 
 MIT. Úsalo, véndelo, hazlo tuyo.
+
+---
+
+📌 **PD — si te saltaste hasta acá:** arriba tienes el paso a paso para dejar un agente
+mínimo contestando solo, capturando interesados y avisándote. Y si quieres aprender a
+crear agentes de IA y automatizaciones con Claude Code en serio,
+**[anótate a la lista →](https://tally.so/r/EkGZoL?origen=readme)**

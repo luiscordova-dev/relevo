@@ -1,6 +1,6 @@
 ---
 name: cargar-conocimiento
-description: Cargas al agente información que no cabe en su prompt — un menú completo, un catálogo, un export de base de datos, una lista de precios, un PDF de políticas. Claude la reestructura para que la búsqueda la encuentre de verdad, la indexa y comprueba con preguntas reales que se recupera. Úsala con "/cargar-conocimiento", "quiero subirle mi catálogo", "tengo un Excel con los precios", "que aprenda de este documento".
+description: 'AVANZADO · referencia sin soporte (ver AVANZADO.md): Cargas al agente información que no cabe en su prompt — un menú completo, un catálogo, un export de base de datos, una lista de precios, un PDF de políticas. Claude la reestructura para que la búsqueda la encuentre de verdad, la indexa y comprueba con preguntas reales que se recupera. Úsala con "/cargar-conocimiento", "quiero subirle mi catálogo", "tengo un Excel con los precios", "que aprenda de este documento".'
 ---
 
 # Cargar conocimiento

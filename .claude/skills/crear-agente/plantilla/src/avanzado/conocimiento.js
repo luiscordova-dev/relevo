@@ -9,7 +9,7 @@
 // Regla de la casa: la complejidad se paga sola cuando la información la exige.
 // Con poca información esto ni se enciende.
 
-import { negocio } from "../negocio.js";
+import { negocio } from "../../negocio.js";
 
 /** Arriba de esto, la información deja de caber cómoda en el prompt. */
 export const UMBRAL_BYTES = 8000;

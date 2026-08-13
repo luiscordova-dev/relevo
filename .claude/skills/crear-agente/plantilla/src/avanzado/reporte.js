@@ -5,9 +5,9 @@
 //   2. Resend              — alternativa si prefieres un remitente del negocio
 // La primera que esté configurada gana.
 
-import { negocio } from "../negocio.js";
-import { resumenDelDia, registrarEvento, recordatoriosVencidos, ponerRecordatorio, cargarAjustes, capacidadOn } from "./datos.js";
-import { avisarTexto } from "./avisos.js";
+import { negocio } from "../../negocio.js";
+import { resumenDelDia, registrarEvento, recordatoriosVencidos, ponerRecordatorio, cargarAjustes, capacidadOn } from "../datos.js";
+import { avisarTexto } from "../avisos.js";
 import { composioListo, ejecutarComposio } from "./composio.js";
 
 /**

@@ -2,7 +2,7 @@
 
 import { negocio } from "../negocio.js";
 import { bloqueDeHerramientas, hayHerramientas } from "./herramientas.js";
-import { bloqueDeConocimiento, infoEsGrande, buscarFragmentos } from "./conocimiento.js";
+import { bloqueDeConocimiento, infoEsGrande, buscarFragmentos } from "./avanzado/conocimiento.js";
 import { registrarUso, leerAjustes, ahoraMes } from "./datos.js";
 
 const MARCA_INICIO = "<<<DATOS>>>";

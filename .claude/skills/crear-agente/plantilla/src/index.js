@@ -13,7 +13,7 @@ import { atender } from "./agente.js";
 import { renderPanel } from "./panel/index.js";
 import { paginaLogin } from "./panel/login.js";
 import { apiInbox } from "./inbox.js";
-import { enviarReporteDiario, dispararRecordatorios, viaDelReporte } from "./reporte.js";
+import { enviarReporteDiario, dispararRecordatorios, viaDelReporte } from "./avanzado/reporte.js";
 import { registrarEvento } from "./datos.js";
 import { autoprueba } from "./autoprueba.js";
 import { diagnosticar } from "./calidad.js";

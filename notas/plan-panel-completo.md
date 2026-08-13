@@ -1,4 +1,9 @@
 # Plan — El panel del cliente final
+
+> ⚠️ **Nota (2026-08-13):** las fases que siguen pendientes (C · Insights, E-G · citas
+> guiadas, cobros, tickets, reseñas, campañas) NO son roadmap del repo público. Son
+> material de la core offer (workshop / Sistema). La frontera del kit está en
+> `CLAUDE.md` y el mapa del playground en `AVANZADO.md`.
 **2026-08-12** · Modelado de lo que vi, con costos reales y orden de ataque.
 
 ## El encuadre que resuelve la duda

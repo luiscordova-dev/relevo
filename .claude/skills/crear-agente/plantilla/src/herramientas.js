@@ -5,7 +5,7 @@
 // Es un loop de agente de verdad — no una plantilla con huecos.
 
 import { negocio } from "../negocio.js";
-import { ejecutarComposio } from "./composio.js";
+import { ejecutarComposio } from "./avanzado/composio.js";
 
 const MARCA_INICIO = "<<<HERRAMIENTA>>>";
 const MARCA_FIN = "<<<FIN>>>";

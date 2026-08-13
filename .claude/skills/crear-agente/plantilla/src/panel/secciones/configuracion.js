@@ -56,8 +56,9 @@ export const HTML = `
       <span class="der" id="cfAppsMaster"></span></div>
     <div class="caja-cuerpo">
       <div class="cf-catalogo" id="cfCatalogo"></div>
-      <p class="cf-mas">…y 1,000+ más vía Composio (tu CRM, tu ERP): pídesela a Claude con
-      /conectar y queda probada.</p>
+      <p class="cf-mas">…y 1,000+ apps más vía Composio. El código de referencia está en
+      <b>src/avanzado/</b> de tu agente; la ruta guiada, con método y soporte, en el
+      workshop.</p>
     </div>
   </div>
 
@@ -139,8 +140,10 @@ SECCIONES.configuracion = {
     // la derecha (interruptor si se puede apagar, botón si falta conectar,
     // etiqueta si no hay nada que hacer). Nunca los tres a la vez.
     const caps = fl.caps || {};
-    const fila = ({ ic, nombre, detalle, ok, sw, on, prompt, fijo }) => {
-      const ctrl = !ok && prompt
+    const fila = ({ ic, nombre, detalle, ok, sw, on, prompt, fijo, lista }) => {
+      const ctrl = !ok && lista
+        ? '<a class="btn-sec" href="https://tally.so/r/EkGZoL?origen=panel" target="_blank" rel="noopener">Conectar →</a>'
+        : !ok && prompt
         ? '<button class="btn-sec" data-p="' + esc(prompt) + '">Conectar</button>'
         : (ok && sw
           ? '<span class="estado ' + (on ? 'si' : 'no') + '">' + (on ? 'ACTIVO' : 'APAGADO') + '</span>' +
@@ -163,8 +166,8 @@ SECCIONES.configuracion = {
       fila({ ic:'📊', nombre:'Reporte diario', ok: fl.reporteCorreo, sw:'reporte', on: caps.reporte,
         detalle: fl.reporteCorreo
           ? 'cada noche por ' + String(fl.reporteVia||'correo').toUpperCase() + ': el resumen del día'
-          : 'un resumen del día por correo, cada noche',
-        prompt:'Enciende el reporte diario de mi agente Relevo por Gmail vía Composio (o Resend) y mándame uno de prueba con su id.' }) +
+          : 'referencia en src/avanzado/reporte.js — la ruta guiada, en el workshop',
+        lista: true }) +
       fila({ ic:'🧠', nombre:'Cerebro', ok:true, fijo: fl.cerebroPropio ? 'LLAVE PROPIA' : 'INCLUIDO',
         detalle: fl.cerebroPropio ? 'usando tu propia llave de ' + esc(fl.cerebroPropio)
                                   : 'el modelo incluido en tu Cloudflare, sin llaves extra' });
@@ -221,7 +224,8 @@ SECCIONES.configuracion = {
       '<span class="nom"><b>' + a[1] + '</b><small>' + a[2] + ' · ' + a[3] + '</small></span>' +
       (a[4]
         ? '<span class="estado si">EN USO</span>'
-        : '<button class="btn-sec" data-p="' + esc(a[5]) + '">Conectar</button>') +
+        : '<a class="btn-sec" href="https://tally.so/r/EkGZoL?origen=panel" target="_blank" rel="noopener" ' +
+          'title="La ruta guiada vive en el workshop">Conectar →</a>') +
       '</div>').join('');
 
     // Los prompts de ejemplo para cambiar el agente conversando

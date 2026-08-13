@@ -4,7 +4,7 @@
 // (herramientas.js) y el reporte diario por Gmail (reporte.js). Un solo lugar
 // que arreglar cuando algo cambie.
 
-import { leerAjustes, guardarAjuste } from "./datos.js";
+import { leerAjustes, guardarAjuste } from "../datos.js";
 
 const API = "https://backend.composio.dev/api/v3";
 

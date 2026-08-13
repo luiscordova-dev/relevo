@@ -1,6 +1,6 @@
 ---
 name: agregar-capacidad
-description: Le agregas una capacidad nueva al agente describiéndola en español — "que consulte el estatus de un pedido", "que calcule el costo de envío por código postal", "que revise si hay inventario". Claude la escribe usando las herramientas existentes como molde, la conecta, le escribe su prueba y verifica que nada más se rompió. Úsala con "/agregar-capacidad", "quiero que mi agente pueda…", "agrégale que…", "que también haga…".
+description: 'AVANZADO · referencia sin soporte (ver AVANZADO.md): Le agregas una capacidad nueva al agente describiéndola en español — "que consulte el estatus de un pedido", "que calcule el costo de envío por código postal", "que revise si hay inventario". Claude la escribe usando las herramientas existentes como molde, la conecta, le escribe su prueba y verifica que nada más se rompió. Úsala con "/agregar-capacidad", "quiero que mi agente pueda…", "agrégale que…", "que también haga…".'
 ---
 
 # Agregar una capacidad

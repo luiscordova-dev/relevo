@@ -1,6 +1,6 @@
 ---
 name: afinar
-description: Hace al agente más listo aprendiendo de sus conversaciones reales. Lee los chats, las escalaciones y los errores, encuentra las preguntas que NO supo contestar o contestó mal, y propone arreglos concretos a la información del negocio con antes/después. Aplica solo con confirmación y re-verifica. Úsala con "/afinar", "mejora las respuestas", "el agente no supo contestar", "hazlo más inteligente", "aprende de las conversaciones".
+description: 'AVANZADO · referencia sin soporte (ver AVANZADO.md): Hace al agente más listo aprendiendo de sus conversaciones reales. Lee los chats, las escalaciones y los errores, encuentra las preguntas que NO supo contestar o contestó mal, y propone arreglos concretos a la información del negocio con antes/después. Aplica solo con confirmación y re-verifica. Úsala con "/afinar", "mejora las respuestas", "el agente no supo contestar", "hazlo más inteligente", "aprende de las conversaciones".'
 ---
 
 # Afinar: el agente aprende de su propio uso

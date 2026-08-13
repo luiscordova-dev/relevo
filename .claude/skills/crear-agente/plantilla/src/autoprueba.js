@@ -7,7 +7,7 @@ import { AUDIO_PRUEBA_B64, IMAGEN_PRUEBA_B64, b64ABytes } from "./archivos-prueb
 import { guardarLead, leadDeConversacion, pausar, obtenerConversacion, registrarEvento } from "./datos.js";
 import { negocio } from "../negocio.js";
 import { diagnosticar } from "./calidad.js";
-import { ragActivo, buscarFragmentos } from "./conocimiento.js";
+import { ragActivo, buscarFragmentos } from "./avanzado/conocimiento.js";
 
 /** Un fallo que ya sabe cuál es su propio arreglo. Evita mandar al usuario al lugar equivocado. */
 function fallo(mensaje, arregla) {

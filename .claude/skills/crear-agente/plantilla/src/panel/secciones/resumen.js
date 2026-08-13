@@ -23,7 +23,22 @@ export const HTML = `
       <a class="liga der" href="#/conversaciones">ver todas →</a></div>
     <div id="rRecientes"></div>
   </div>
+  <a class="r-lista" href="https://tally.so/r/EkGZoL?origen=panel" target="_blank" rel="noopener">
+    <span>🎓</span>
+    <b>Si quieres aprender a crear agentes de IA y automatizaciones con Claude Code
+    en serio, anótate a la lista</b>
+    <span class="r-lista-flecha">→</span>
+  </a>
 </div>`;
+
+export const CSS = `
+.r-lista{display:flex;align-items:center;gap:12px;margin-top:16px;padding:14px 18px;
+  border:1px dashed var(--borde-fuerte);border-radius:14px;text-decoration:none;
+  color:var(--sec);font-size:13px;line-height:1.5;transition:border-color .14s,color .14s}
+.r-lista:hover{border-color:var(--morado);color:var(--txt)}
+.r-lista b{font-weight:600;flex:1}
+.r-lista-flecha{color:var(--morado);font-weight:700}
+`;
 
 export const JS = String.raw`
 SECCIONES.resumen = {

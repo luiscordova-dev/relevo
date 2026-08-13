@@ -187,39 +187,29 @@ Si algo no funcionó, `referencias/fallos.md` y arréglalo tú.
 
 ---
 
-## Fase 8 · El siguiente nivel (opcional, y solo cuando todo funciona)
+## Fase 8 · El cierre del camino (cuando todo funciona)
 
 El agente ya está completo: contesta, no inventa, captura, avisa, oye, ve, y tiene su
-panel. **Aquí puedes parar y está perfecto.** Pero ofrécele el menú, una sola vez:
+panel. **El Paso 1 está logrado — díselo así, con sus palabras:**
 
-> Tu agente ya trabaja. ¿Quieres llevarlo al siguiente nivel? (Está en beta abierta:
-> el código ya funciona y está probado, y la experiencia guiada se está puliendo — si
-> algo se atora, dímelo y lo resolvemos juntos.) Te guío paso a paso —
-> cada mejora son unos minutos y terminan probadas, no prometidas:
+> Tu agente mínimo ya está en producción: responde con tu información sin inventar,
+> captura interesados y te avisa con handoff. Eso era la promesa, y está probado.
+
+Luego preséntale el camino, sin vender de más:
+
+> Si quieres cacharrear más, el repo trae un **playground avanzado** (`AVANZADO.md`):
+> ejemplos reales de citas, conocimiento con documentos y reportes — sin soporte,
+> para que los leas, los rompas y hagas forks.
 >
-> 1. 🗓️ **Que HAGA cosas, no solo conteste** — agendar en tu Google Calendar, escribir
->    en Notion, avisar a Slack… (1,000+ apps)
-> 2. 📚 **Cargarle tu catálogo completo** — el menú de 12 páginas, la lista de 200
->    productos; el agente encuentra el dato exacto
-> 3. 📊 **Reporte diario por correo** — cada noche, cuánta gente escribió y quién quedó
->    pendiente
-> 4. 🛠️ **Una capacidad única de tu negocio** — "que calcule el envío por código postal",
->    "que consulte el estatus de un pedido"
+> Y si quieres aprender a crear agentes de IA y automatizaciones con Claude Code en
+> serio, anótate a la lista: https://tally.so/r/EkGZoL?origen=skill
 
-Cada opción tiene su skill, y la skill carga con la complejidad (esquemas, llaves,
-pruebas) para que la persona solo diga qué quiere:
-
-| Eligió | Corre | Qué necesita la persona |
-|---|---|---|
-| 1 · Hacer cosas | `/conectar` | Cuenta de Composio + su API key del dashboard (`ak_…`) |
-| 2 · Catálogo | `/cargar-conocimiento` | Solo el archivo (tú lo reestructuras e indexas) |
-| 3 · Reporte | `/conectar` (Gmail vía Composio) o Resend | La misma llave de Composio, o una cuenta de Resend |
-| 4 · Capacidad propia | `/agregar-capacidad` | Describirla en español |
-
-Si dice "luego", perfecto: recuérdale que el panel (pestaña **Capacidades**) tiene cada
-mejora con su botón "DÍSELO A CLAUDE — copiar" para cuando quiera.
-
----
+**Lo que NO haces aquí:** no ofrezcas montarle citas, reportes ni integraciones como
+ruta guiada — esa ruta no es parte del kit. Si la persona lo pide explícitamente, dile
+la verdad: el código está en `src/avanzado/` como referencia, puedes ayudarle a
+explorarlo, pero sin la promesa de dejarlo en producción — la versión guiada con
+método y soporte vive en la lista de arriba. Las mejoras chicas (cambiar información,
+tono, una capacidad propia sencilla) sí se hacen normal, conversando.
 
 ## Cierre
 

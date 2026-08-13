@@ -249,8 +249,9 @@ SECCIONES.flujo = {
         p: (d.herramientas||[]).length
           ? (d.herramientas||[]).map(h => '<b>' + esc(h.id) + '</b> — ' + esc(h.para)).join('<br>')
           : 'Sin herramientas todavía. Con /conectar le das acceso a tu calendario, Notion, Slack y 1,000+ apps.',
+        lista: !d.composio,
         prompt: d.composio ? null :
-          'Usa /conectar para conectarle a mi agente Relevo mi [Google Calendar / Notion / Slack] con Composio, probado de punta a punta.' },
+          'Guíame por src/avanzado/composio.js de mi agente Relevo: quiero entender el loop de herramientas.' },
       captura: {
         t: '🔔 Captura',
         datos: dato('Interesados', c.lead||0) + dato('Evidencia', 'message_id de Telegram'),
@@ -278,8 +279,9 @@ SECCIONES.flujo = {
         p: d.reporteCorreo
           ? 'El resumen del día por correo: cuánta gente escribió, interesados nuevos y qué quedó pendiente.'
           : 'Sin conectar. Sale por tu propio Gmail (Composio) o por Resend.',
+        lista: !d.reporteCorreo,
         prompt: d.reporteCorreo ? null :
-          'Enciende el reporte diario de mi agente Relevo por Gmail vía Composio (o Resend) y mándame uno de prueba con su id.' },
+          'Explícame src/avanzado/reporte.js de mi agente Relevo y qué necesitaría para encenderlo.' },
     };
     return F[id];
   },
@@ -298,10 +300,16 @@ SECCIONES.flujo = {
     if (f.sw) { swInput.dataset.sw = f.sw; swInput.checked = !!f.on; swInput.disabled = false; }
 
     // la acción del pie, cuando falta conectar algo
-    document.getElementById('fDetPie').innerHTML = f.prompt
-      ? '<button class="cap-prompt" data-p="' + esc(f.prompt) + '">' +
-        '<b>&gt;_ DÍSELO A CLAUDE — copiar</b>' + esc(f.prompt) + '</button>'
-      : '';
+    document.getElementById('fDetPie').innerHTML =
+      (f.lista
+        ? '<a class="cap-lista" href="https://tally.so/r/EkGZoL?origen=panel" target="_blank" rel="noopener">' +
+          '🎓 Aprende a montarlo en serio — anótate a la lista →</a>'
+        : '') +
+      (f.prompt
+        ? '<button class="cap-prompt" data-p="' + esc(f.prompt) + '">' +
+          '<b>&gt;_ ' + (f.lista ? 'o explóralo por tu cuenta' : 'DÍSELO A CLAUDE') + ' — copiar</b>' +
+          esc(f.prompt) + '</button>'
+        : '');
     document.querySelectorAll('#fDetPie .cap-prompt').forEach(b => b.onclick = async () => {
       try { await navigator.clipboard.writeText(b.dataset.p); } catch {}
       const bb = b.querySelector('b'); const antes = bb.textContent;

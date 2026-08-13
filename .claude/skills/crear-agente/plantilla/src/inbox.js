@@ -2,10 +2,10 @@
 
 import { responder } from "./zernio.js";
 import { negocio } from "../negocio.js";
-import { viaDelReporte } from "./reporte.js";
+import { viaDelReporte } from "./avanzado/reporte.js";
 import { separarDatos } from "./cerebro.js";
 import { razonar } from "./agente.js";
-import { composioListo } from "./composio.js";
+import { composioListo } from "./avanzado/composio.js";
 import {
   listarConversaciones, hiloCompleto, cambiarPausa, guardarMensaje, cambiarCierre,
   ponerRecordatorio, guardarEtiquetas, etiquetasUsadas, obtenerConversacion,
@@ -17,7 +17,7 @@ import {
 import {
   ragDisponible, ragActivo, indexarDocumento, borrarDelIndice, infoEsGrande, buscarFragmentos,
   UMBRAL_BYTES, bytes,
-} from "./conocimiento.js";
+} from "./avanzado/conocimiento.js";
 
 // Cuando el dueño contesta a mano, el agente se calla solo. Si nunca reactiva,
 // vuelve al día siguiente en lugar de quedarse mudo para siempre.

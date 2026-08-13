@@ -1,6 +1,6 @@
 ---
 name: conectar
-description: Conecta tu agente con el mundo, guiado y probado. Composio para que HAGA cosas (agendar en Google Calendar o Cal.com, escribir en Notion o Sheets, avisar a Slack, crear deals en HubSpot — 1000+ apps), y canales nuevos (Telegram, y la ruta con ManyChat para Instagram/Messenger/TikTok). Explica qué es cada cosa antes de pedirte nada, y ninguna conexión se da por hecha: todas terminan con una prueba real. Úsala con "/conectar", "quiero que agende citas", "conéctalo con mi calendario", "mándame los leads a Notion/Sheets/Slack", "quiero el agente en Instagram", "qué es Composio".
+description: 'AVANZADO · referencia sin soporte (ver AVANZADO.md): Conecta tu agente con el mundo, guiado y probado. Composio para que HAGA cosas (agendar en Google Calendar o Cal.com, escribir en Notion o Sheets, avisar a Slack, crear deals en HubSpot — 1000+ apps), y canales nuevos (Telegram, y la ruta con ManyChat para Instagram/Messenger/TikTok). Explica qué es cada cosa antes de pedirte nada, y ninguna conexión se da por hecha: todas terminan con una prueba real. Úsala con "/conectar", "quiero que agende citas", "conéctalo con mi calendario", "mándame los leads a Notion/Sheets/Slack", "quiero el agente en Instagram", "qué es Composio".'
 ---
 
 # Conectar tu agente

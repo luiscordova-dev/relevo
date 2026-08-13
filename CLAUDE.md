@@ -21,16 +21,28 @@ Su punto de entrada es la skill **`/crear-agente`**: entrevista sobre su negocio
 genera el agente → lo despliega en SU Cloudflare → lo prueba con evidencia. No le pidas
 que corra comandos: tú los corres.
 
+## La frontera del kit (regla para TODA decisión de alcance)
+**¿Es parte de "primer agente vivo"? → completo, guiado y soportado (Paso 1).**
+**¿Es "operar un sistema de negocio" (citas, reportes, documentos, integraciones)? →
+playground avanzado (Paso 2): visible, sin guía, sin soporte.** El camino guiado de eso
+vive en la lista del workshop (https://tally.so/r/EkGZoL) — nunca prometas que "pronto
+será gratis" ni lo montes como ruta guiada desde el kit.
+
 ## Las skills del kit
+**Oficiales (Paso 1 — guiadas y soportadas):**
 | Skill | Para qué |
 |---|---|
 | `/crear-agente` | Construir y desplegar un agente nuevo, de cero a probado |
 | `/autopsia` | Diagnosticar una conversación que salió mal, sobre la base de datos real |
 | `/auditoria` | Semáforo de seguridad y costos, con evidencia |
-| `/afinar` | Mejorar al agente con sus conversaciones reales |
-| `/conectar` | Composio (calendario, CRM, Slack…) y canales — todo termina probado |
-| `/agregar-capacidad` | Capacidades propias del negocio, con su prueba |
-| `/cargar-conocimiento` | Catálogos, menús y documentos largos: Claude los reestructura, indexa y prueba |
+
+**Avanzadas (Paso 2 — referencia sin soporte, ver `AVANZADO.md`):**
+| Skill | Referencia de |
+|---|---|
+| `/conectar` | Composio y canales, con las lecciones reales comentadas |
+| `/cargar-conocimiento` | Reestructurar documentos para RAG |
+| `/agregar-capacidad` | Capacidades propias `local:` |
+| `/afinar` | Mejorar con conversaciones reales |
 
 ## Reglas de la casa
 - **Evidencia, no fe**: un aviso sin `message_id` no llegó; una prueba que no corriste no pasó.

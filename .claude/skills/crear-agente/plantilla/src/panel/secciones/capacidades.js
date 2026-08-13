@@ -34,6 +34,10 @@ export const CSS = `
 .cap-pie{display:flex;align-items:center;gap:8px;min-height:34px}
 .cap-pie .cap-estado{margin-left:0}
 .cap-pie small{font-size:11px;color:var(--sec)}
+.cap-lista{display:block;background:var(--morado-tenue);color:var(--morado);border-radius:10px;
+  padding:9px 12px;font-size:12px;font-weight:600;text-decoration:none;margin-bottom:7px;
+  transition:opacity .14s}
+.cap-lista:hover{opacity:.85}
 `;
 
 export const JS = String.raw`
@@ -78,9 +82,10 @@ SECCIONES.capacidades = {
         on: caps.herramientas, conecta: !d.composio,
         p: d.composio
           ? 'Conectadas: ' + (d.herramientas||[]).map(h=>h.id).join(', ') + '. El interruptor las apaga todas de golpe.'
-          : 'Agenda en tu calendario, escribe en Notion, avisa a Slack — 1,000+ apps vía Composio.',
+          : 'Agenda en tu calendario, escribe en Notion, avisa a Slack — 1,000+ apps. El código está en src/avanzado/ como referencia.',
+        lista: !d.composio,
         prompt: d.composio ? null :
-          'Usa /conectar para conectarle a mi agente Relevo mi [Google Calendar / Notion / Slack] con Composio, y pruébalo de punta a punta.' },
+          'Guíame por src/avanzado/composio.js y el loop de herramientas.js de mi agente Relevo: quiero entender cómo funciona y qué haría falta para conectar algo real.' },
       { ic:'📚', t:'Conocimiento (RAG)', sw: kn.activo || (kn.documentos > 0) ? 'conocimiento' : null,
         on: caps.conocimiento, conecta: !(kn.activo || kn.documentos > 0),
         p: (kn.activo || kn.documentos > 0)
@@ -93,8 +98,9 @@ SECCIONES.capacidades = {
         p: d.reporteCorreo
           ? 'Cada noche por ' + String(d.reporteVia||'correo').toUpperCase() + ': cuánta gente escribió, interesados nuevos y qué quedó pendiente.'
           : 'Cada noche por correo: cuánta gente escribió, interesados nuevos y qué quedó pendiente.',
+        lista: !d.reporteCorreo,
         prompt: d.reporteCorreo ? null :
-          'Enciende el reporte diario por correo de mi agente Relevo: por Gmail vía Composio (o Resend), y mándame uno de prueba con su id como evidencia.' },
+          'Explícame src/avanzado/reporte.js de mi agente Relevo: qué hace y qué necesitaría para encenderlo por mi cuenta.' },
 
       { ic:'🛠️', t:'Capacidades propias', conecta: !locales.length, serie: locales.length > 0,
         p: locales.length
@@ -115,8 +121,13 @@ SECCIONES.capacidades = {
           (c.conecta ? 'CONECTA' : 'SIEMPRE ACTIVA') + '</span>';
 
       const pie = c.prompt
-        ? '<button class="cap-prompt" data-p="' + esc(c.prompt) + '">' +
-          '<b>&gt;_ DÍSELO A CLAUDE — copiar</b>' + esc(c.prompt) + '</button>'
+        ? (c.lista
+            ? '<a class="cap-lista" href="https://tally.so/r/EkGZoL?origen=panel" target="_blank" rel="noopener">' +
+              '🎓 Aprende a montarlo en serio — anótate a la lista →</a>' +
+              '<button class="cap-prompt" data-p="' + esc(c.prompt) + '">' +
+              '<b>&gt;_ o explóralo por tu cuenta — copiar</b>' + esc(c.prompt) + '</button>'
+            : '<button class="cap-prompt" data-p="' + esc(c.prompt) + '">' +
+              '<b>&gt;_ DÍSELO A CLAUDE — copiar</b>' + esc(c.prompt) + '</button>')
         : (c.sw
           ? '<div class="cap-pie"><span class="cap-estado ' + (c.on ? 'on' : 'off') + '">' +
             (c.on ? 'ENCENDIDA' : 'APAGADA') + '</span><small>' +
