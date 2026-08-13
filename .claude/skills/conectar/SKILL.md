@@ -53,7 +53,7 @@ Cada cuenta debe salir con `"status": "ACTIVE"`. Una `EXPIRED` hay que reconecta
 Si mandas uno que no existe, la llamada no falla con un error claro — simplemente no
 encuentra ninguna cuenta y TODAS las herramientas se caen con "no connected account". Y el
 valor correcto **no es adivinable**: en una cuenta real puede ser algo como
-`pg-test-830b58f5-…`, no `default`.
+`pg-test-4f2a9c1e-…`, no `default`.
 
 El agente ya lo resuelve solo: `src/composio.js` pregunta bajo qué usuario viven las
 conexiones activas y lo guarda en `ajustes`. **No pongas `COMPOSIO_USER_ID` a mano** a menos

@@ -18,7 +18,7 @@ export const composioListo = (env) => !!env.COMPOSIO_API_KEY;
  * falla con un error claro: simplemente NO encuentra ninguna cuenta conectada y
  * todas las herramientas se caen con "no connected account". Y el valor correcto
  * no es adivinable — en una cuenta real puede ser algo como
- * "pg-test-830b58f5-…", no "default".
+ * "pg-test-4f2a9c1e-…", no "default".
  *
  * Por eso se descubre solo: se pregunta a Composio bajo qué usuario viven las
  * conexiones activas y se guarda. Así conectar Composio es SOLO poner la llave.
