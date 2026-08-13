@@ -65,6 +65,13 @@ SECCIONES.capacidades = {
         p: locales.length ? locales.map(h=>'· '+h.para).join(' ') :
           'Lógica de TU negocio: consultar un pedido, calcular un envío, checar inventario.',
         prompt:'Usa /agregar-capacidad: quiero que mi agente Relevo pueda [describe la capacidad], con su prueba incluida.' },
+      { ic:'📚', t:'Conocimiento (RAG)', on:!!(d.conocimiento && d.conocimiento.activo),
+        est:(d.conocimiento && d.conocimiento.activo) ? d.conocimiento.documentos+' DOCS' : 'CARGA',
+        p:(d.conocimiento && d.conocimiento.activo)
+          ? 'Busca en tus documentos el dato exacto antes de contestar. ' + d.conocimiento.trozos + ' fragmentos indexados.'
+          : 'Cárgale el menú completo, el catálogo de 200 productos o tus políticas: encuentra el dato exacto, sin inventar.',
+        prompt:(d.conocimiento && d.conocimiento.activo) ? null :
+          'Usa /cargar-conocimiento: quiero cargarle a mi agente Relevo mi [menú / catálogo / políticas] — te paso el archivo y tú lo estructuras, lo indexas y lo pruebas.' },
       { ic:'⏰', t:'Recordatorios', on:true, est:'ACTIVO',
         p:'Desde una conversación: "recuérdame este chat mañana" → te llega el aviso a Telegram.' },
       { ic:'📊', t:'Reporte diario', on:d.reporteCorreo, est:d.reporteCorreo?'ACTIVO':'CONECTA',

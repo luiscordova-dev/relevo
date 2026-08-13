@@ -143,7 +143,11 @@ export async function apiInbox(request, env, url) {
   }
 
   if (ruta === "flujo") {
-    const [conteos, ajustes] = await Promise.all([conteoEventos(env, 30), leerAjustes(env)]);
+    const [conteos, ajustes, rag, docs] = await Promise.all([
+      conteoEventos(env, 30), leerAjustes(env), ragActivo(env),
+      env.DB.prepare("SELECT COUNT(*) n, COALESCE(SUM(trozos),0) t FROM documentos")
+        .first().catch(() => ({ n: 0, t: 0 })),
+    ]);
     return Response.json({
       conteos,
       modelo: env.MODELO_CEREBRO || "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
@@ -153,6 +157,7 @@ export async function apiInbox(request, env, url) {
       herramientas: (negocio.herramientas || []).map((h) => ({ id: h.id, tool: h.tool, para: h.para })),
       canales: { whatsapp: !!env.ZERNIO_ACCOUNT_ID, telegramAvisos: !!env.TELEGRAM_CHAT_ID },
       composio: composioListo(env),
+      conocimiento: { activo: rag, documentos: docs?.n || 0, trozos: docs?.t || 0 },
       reporteCorreo: !!viaDelReporte(env).via,
       reporteVia: viaDelReporte(env).via,
       reporteMotivo: viaDelReporte(env).motivo,

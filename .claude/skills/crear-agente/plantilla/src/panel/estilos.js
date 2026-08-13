@@ -128,7 +128,10 @@ a.liga{color:var(--morado);text-decoration:none;font-weight:600}
         flex-direction:row;align-items:center;border-top:1px solid var(--lateral-linea)}
   .logo,.ngrupo,.pie-lateral{display:none}
   nav{display:flex;flex:1;padding:6px;overflow-x:auto;overflow-y:hidden}
-  .nitem{flex:1;flex-direction:column;gap:3px;font-size:9.5px;padding:7px 4px;min-width:58px}
+  .nitem{flex:1;flex-direction:column;gap:3px;font-size:9px;padding:7px 3px;min-width:62px}
+  /* 7+ secciones: la etiqueta se corta con puntos en vez de encimarse con la vecina */
+  .nitem span:not(.ic):not(.nn){max-width:100%;overflow:hidden;text-overflow:ellipsis;
+    white-space:nowrap;display:block;text-align:center}
   .nitem .ic{font-size:17px}
   .nitem .nn{position:absolute;transform:translate(14px,-4px)}
   .contenido{padding-bottom:74px}

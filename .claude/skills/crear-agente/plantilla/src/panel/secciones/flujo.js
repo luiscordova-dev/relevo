@@ -47,6 +47,9 @@ SECCIONES.flujo = {
       ['vista', 450, 300, 130, '👁️', 'Vista', (c.uso_vista||0)+' fotos', true],
       ['memoria', 600, 300, 150, '🗂️', 'Memoria', 'D1 · últimos 12 msgs', true],
       ['herr', 300, 390, 220, '🧰', 'Herramientas', (d.herramientas||[]).length + ' conectadas · ' + (c.herramienta||0) + ' usos', (d.herramientas||[]).length > 0],
+      ['conoc', 560, 390, 200, '📚', 'Conocimiento', (d.conocimiento && d.conocimiento.activo)
+        ? d.conocimiento.documentos + ' docs · ' + d.conocimiento.trozos + ' fragmentos'
+        : 'apagado', !!(d.conocimiento && d.conocimiento.activo)],
       ['captura', 620, 40, 170, '🔔', 'Captura', (c.lead||0)+' interesados', true],
       ['escala', 620, 130, 170, '🔴', 'Escalación', (c.escalacion||0)+' pases a humano', true],
       ['telegram', 850, 82, 115, '📨', 'Telegram', d.canales.telegramAvisos ? 'avisos ON' : 'sin conectar', d.canales.telegramAvisos],
@@ -77,7 +80,8 @@ SECCIONES.flujo = {
       linea('cerebro','captura') + linea('cerebro','escala') + linea('cerebro','respuesta') +
       linea('captura','telegram') + linea('escala','telegram') + linea('respuesta','reporte', true) +
       linea('oido','cerebro', true) + linea('vista','cerebro', true) +
-      linea('memoria','cerebro', true) + linea('herr','cerebro', true);
+      linea('memoria','cerebro', true) + linea('herr','cerebro', true) +
+      linea('conoc','cerebro', true);
 
     svg += nodos.map(([id,,,w,ic,t,s,on]) => {
       const { x, y } = pos[id];
@@ -151,6 +155,10 @@ SECCIONES.flujo = {
       oido: ['🎙️ Oído', 'Modelo: ' + esc(d.modeloOido.split('/').pop()) + '. Transcribe las notas de voz y el cerebro responde a lo que dijeron. Audios en 30 días: <b>' + (c.uso_oido||0) + '</b>'],
       vista: ['👁️ Vista', 'Modelo: ' + esc(d.modeloVista.split('/').pop()) + '. Describe las fotos que mandan (productos, comprobantes, listas). Fotos en 30 días: <b>' + (c.uso_vista||0) + '</b>'],
       memoria: ['🗂️ Memoria', 'Cada conversación guarda su historial en tu base D1. El cerebro ve los últimos 12 mensajes: se acuerda del nombre y no pregunta dos veces lo mismo.'],
+      conoc: ['📚 Conocimiento', (d.conocimiento && d.conocimiento.activo)
+        ? 'Antes de pensar, el agente busca en tus documentos los 3-4 fragmentos que responden a la pregunta, y solo esos entran a su cabeza. ' +
+          d.conocimiento.documentos + ' documento(s), ' + d.conocimiento.trozos + ' fragmentos indexados.'
+        : 'Apagado. Con tu información actual no hace falta: va completa en el prompt, que es más simple y más confiable. Se enciende solo cuando subes documentos en la pestaña Conocimiento.'],
       herr: ['🧰 Herramientas', (d.herramientas||[]).length
         ? (d.herramientas||[]).map(h => '<b>' + esc(h.id) + '</b> → ' + esc(h.tool) + '<br><span style="color:var(--sec)">' + esc(h.para) + '</span>').join('<br><br>')
         : 'Sin herramientas conectadas todavía. Con <b>/conectar</b> le das acceso a tu calendario, Notion, Slack y 1000+ apps vía Composio.'],
