@@ -1,3 +1,11 @@
+> ⚠️ **REENCUADRE (2026-08-13), leer antes de grabar:** la promesa en cámara es SOLO
+> el Paso 1 — *"agente mínimo en producción: FAQs sin alucinar, captura, handoff, en
+> ±30 minutos"*. Citas/reportes/panel avanzado se MUESTRAN como playground ("esto
+> también está en el repo como referencia, sin soporte"), nunca como promesa guiada.
+> El cierre del video es la línea única: *"Si quieres aprender a crear agentes de IA
+> y automatizaciones con Claude Code en serio, anótate a la lista"* →
+> https://tally.so/r/EkGZoL?origen=video (¡origen=video para la atribución!).
+
 # Guion del video — ~21 minutos
 
 **Promesa del video:** que alguien lo termine **con su agente contestando**, no que
