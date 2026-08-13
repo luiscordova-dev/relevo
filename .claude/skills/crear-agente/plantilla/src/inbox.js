@@ -33,7 +33,7 @@ const AJUSTES_PERMITIDOS = new Set([
   "moneda",
   // Los switches de Capacidades. Sin valor = encendida; "0" = apagada.
   "cap_oido", "cap_vista", "cap_herramientas", "cap_conocimiento",
-  "cap_recordatorios", "cap_reporte",
+  "cap_recordatorios", "cap_reporte", "cap_avisos",
 ]);
 
 const leerJson = async (request) => request.json().catch(() => ({}));
@@ -170,6 +170,7 @@ export async function apiInbox(request, env, url) {
         conocimiento: capacidadOn(ajustes, "cap_conocimiento"),
         recordatorios: capacidadOn(ajustes, "cap_recordatorios"),
         reporte: capacidadOn(ajustes, "cap_reporte"),
+        avisos: capacidadOn(ajustes, "cap_avisos"),
       },
       conocimiento: { activo: rag, documentos: docs?.n || 0, trozos: docs?.t || 0 },
       reporteCorreo: !!viaDelReporte(env).via,

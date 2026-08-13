@@ -377,7 +377,7 @@ export async function borrarDocumento(env, id) {
 
 export const CAPACIDADES_APAGABLES = [
   "cap_oido", "cap_vista", "cap_herramientas", "cap_conocimiento",
-  "cap_recordatorios", "cap_reporte",
+  "cap_recordatorios", "cap_reporte", "cap_avisos",
 ];
 
 export const capacidadOn = (ajustes, clave) => String(ajustes?.[clave] ?? "1") !== "0";

@@ -2,6 +2,7 @@
 // esto SÍ manda el mensaje y SÍ comprueba que llegó.
 
 import { negocio } from "../negocio.js";
+import { cargarAjustes, capacidadOn } from "./datos.js";
 
 const esc = (s) =>
   String(s ?? "").replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" })[c]);
@@ -20,6 +21,11 @@ function horaLocal(env) {
 async function enviarTelegram(env, html, botonUrl) {
   if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_CHAT_ID) {
     throw new Error("Falta configurar el aviso: TELEGRAM_BOT_TOKEN o TELEGRAM_CHAT_ID");
+  }
+  // El switch del panel (Configuración → Avisos por Telegram). Apagado: el
+  // interesado se guarda igual en el panel — solo no suena el teléfono.
+  if (!capacidadOn(await cargarAjustes(env), "cap_avisos")) {
+    throw new Error("Los avisos están apagados desde el panel");
   }
   const cuerpo = {
     chat_id: env.TELEGRAM_CHAT_ID,

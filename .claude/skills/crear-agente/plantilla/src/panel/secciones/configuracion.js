@@ -33,8 +33,18 @@ export const HTML = `
 
   <div class="caja">
     <div class="caja-cab"><h3>Conexiones</h3>
-      <span class="mini">el estado real de cada pieza</span></div>
+      <span class="mini">el estado real de cada pieza — los interruptores aplican al momento</span></div>
     <div class="caja-cuerpo" id="cfConexiones"></div>
+  </div>
+
+  <div class="caja">
+    <div class="caja-cab"><h3>Disponibles para conectar</h3>
+      <span class="mini">cada una es una conversación con Claude — el botón te da el prompt</span></div>
+    <div class="caja-cuerpo">
+      <div class="cf-catalogo" id="cfCatalogo"></div>
+      <p class="cf-mas">…y 1,000+ apps más vía Composio. Si usas otra cosa (tu CRM, tu ERP),
+      pídesela a Claude con /conectar: si Composio la tiene, tu agente la puede usar.</p>
+    </div>
   </div>
 
   <div class="caja">
@@ -66,6 +76,14 @@ export const CSS = `
 .cf-linea .cf-conectar{margin-left:auto}
 .cf-linea .cf-conectar + .estado{margin-left:0}
 .cf-prompts{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.cf-catalogo{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.cf-app{display:flex;align-items:center;gap:10px;border:1px solid var(--borde);
+  border-radius:13px;padding:11px 13px}
+.cf-app .ic{font-size:17px}
+.cf-app b{font-size:12.5px;letter-spacing:-.1px;flex:1;min-width:0;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.cf-app .btn-sec{padding:6px 13px;font-size:11.5px;border-radius:9px}
+.cf-mas{margin:12px 0 0;font-size:11.5px;color:var(--sec);line-height:1.6}
 `;
 
 export const JS = String.raw`
@@ -94,27 +112,65 @@ SECCIONES.configuracion = {
       });
     });
 
-    // Cada conexión: su estado real y, si está apagada, el botón que copia el
-    // prompt exacto para conectarla con Claude Code. Conectar = copiar y pegar.
-    const linea = (ic, nombre, ok, siTxt, noTxt, prompt) =>
+    // Cada conexión: su estado real. Conectada y apagable → interruptor (aplica
+    // al momento). Sin conectar → botón que copia el prompt para Claude Code.
+    const caps = fl.caps || {};
+    const linea = (ic, nombre, ok, siTxt, noTxt, prompt, sw, on) =>
       '<div class="cf-linea"><span>' + ic + '</span><span>' + nombre + '</span>' +
       (!ok && prompt
         ? '<button class="btn-sec cf-conectar" data-p="' + esc(prompt) + '">Conectar</button>'
         : '') +
-      '<span class="estado ' + (ok ? 'si' : 'no') + '">' + (ok ? siTxt : noTxt) + '</span></div>';
+      (ok && sw
+        ? '<label class="sw" style="margin-left:auto" title="Encender o apagar">' +
+          '<input type="checkbox" data-cfsw="' + sw + '"' + (on ? ' checked' : '') + '><i></i></label>' +
+          '<span class="estado ' + (on ? 'si' : 'no') + '">' + (on ? siTxt : 'APAGADO') + '</span>'
+        : '<span class="estado ' + (ok ? 'si' : 'no') + '">' + (ok ? siTxt : noTxt) + '</span>') +
+      '</div>';
 
     document.getElementById('cfConexiones').innerHTML =
       linea('📱', 'WhatsApp', fl.canales.whatsapp, 'CONECTADO', 'SIN CONECTAR',
         'Conecta WhatsApp a mi agente Relevo con Zernio: crea la llave, registra el webhook firmado y prueba con un mensaje real.') +
       linea('📨', 'Avisos por Telegram', fl.canales.telegramAvisos, 'ACTIVOS', 'SIN CONECTAR',
-        'Configura los avisos de Telegram de mi agente Relevo: guíame con BotFather y prueba que llegue un aviso con su message_id.') +
+        'Configura los avisos de Telegram de mi agente Relevo: guíame con BotFather y prueba que llegue un aviso con su message_id.',
+        'avisos', caps.avisos) +
       linea('🧰', 'Herramientas (Composio)', fl.composio,
             fl.herramientas.length + ' DECLARADAS', 'SIN LLAVE',
-        'Usa /conectar para conectarle Composio a mi agente Relevo: mi API key del dashboard, la app que te diga, y pruébalo de punta a punta.') +
+        'Usa /conectar para conectarle Composio a mi agente Relevo: mi API key del dashboard, la app que te diga, y pruébalo de punta a punta.',
+        'herramientas', caps.herramientas) +
       linea('📊', 'Reporte diario por correo', fl.reporteCorreo,
             'POR ' + String(fl.reporteVia || '').toUpperCase(), 'APAGADO',
-        'Enciende el reporte diario de mi agente Relevo por Gmail vía Composio (o Resend) y mándame uno de prueba con su id.') +
+        'Enciende el reporte diario de mi agente Relevo por Gmail vía Composio (o Resend) y mándame uno de prueba con su id.',
+        'reporte', caps.reporte) +
       linea('🧠', 'Cerebro', true, fl.cerebroPropio ? 'LLAVE PROPIA' : 'INCLUIDO', '');
+
+    // los interruptores de las conexiones
+    document.querySelectorAll('#cfConexiones [data-cfsw]').forEach(sw => sw.onchange = async () => {
+      sw.disabled = true;
+      await post('ajustes', { ['cap_' + sw.dataset.cfsw]: sw.checked ? '1' : '0' });
+      this.init();
+      if (SECCIONES.flujo?.datos) SECCIONES.flujo.cada();
+      if (SECCIONES.capacidades?.datos) SECCIONES.capacidades.cada();
+    });
+
+    // ── el catálogo: lo disponible, con su estado real y su prompt ──
+    const slugs = (fl.herramientas || []).map(h => String(h.tool));
+    const usa = (pref) => slugs.some(t => t.startsWith(pref));
+    const apps = [
+      ['🗓️', 'Google Calendar', usa('GOOGLECALENDAR'), 'Usa /conectar: quiero que mi agente Relevo agende citas en mi Google Calendar, probado de punta a punta.'],
+      ['📝', 'Notion', usa('NOTION'), 'Usa /conectar: quiero que mi agente Relevo escriba los interesados en mi base de Notion, probado de punta a punta.'],
+      ['💬', 'Slack', usa('SLACK'), 'Usa /conectar: quiero que mi agente Relevo avise a mi canal de Slack cuando caiga un interesado, probado de punta a punta.'],
+      ['📊', 'Google Sheets', usa('GOOGLESHEETS'), 'Usa /conectar: quiero que mi agente Relevo registre cada interesado en mi hoja de Google Sheets, probado de punta a punta.'],
+      ['🧲', 'HubSpot', usa('HUBSPOT'), 'Usa /conectar: quiero que mi agente Relevo cree contactos/deals en mi HubSpot, probado de punta a punta.'],
+      ['💳', 'Stripe', usa('STRIPE'), 'Usa /conectar: quiero que mi agente Relevo genere links de pago de Stripe cuando el cliente quiera pagar, probado de punta a punta.'],
+      ['✈️', 'Canal: Telegram', false, 'Usa /conectar: quiero que mi agente Relevo también atienda por Telegram, probado con un mensaje real.'],
+      ['📸', 'Instagram / Messenger', false, 'Usa /conectar: quiero llevar mi agente Relevo a Instagram y Messenger (ruta ManyChat), probado de punta a punta.'],
+    ];
+    document.getElementById('cfCatalogo').innerHTML = apps.map(a =>
+      '<div class="cf-app"><span class="ic">' + a[0] + '</span><b>' + a[1] + '</b>' +
+      (a[2]
+        ? '<span class="estado si">CONECTADA</span>'
+        : '<button class="btn-sec" data-p="' + esc(a[3]) + '">Conectar</button>') +
+      '</div>').join('');
 
     // Los prompts de ejemplo para cambiar el agente conversando
     const ejemplos = [

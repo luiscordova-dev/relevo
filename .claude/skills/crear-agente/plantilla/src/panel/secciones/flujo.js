@@ -97,7 +97,9 @@ SECCIONES.flujo = {
         : 'apagado', !!kn.activo],
       ['captura', 620, 40, 170, '🔔', 'Captura', (c.lead||0)+' interesados', true],
       ['escala', 620, 130, 170, '🔴', 'Escalación', (c.escalacion||0)+' pases a humano', true],
-      ['telegram', 850, 82, 115, '📨', 'Telegram', d.canales.telegramAvisos ? 'avisos ON' : 'sin conectar', d.canales.telegramAvisos],
+      ['telegram', 850, 82, 115, '📨', 'Telegram',
+        !caps.avisos ? 'avisos apagados' : (d.canales.telegramAvisos ? 'avisos ON' : 'sin conectar'),
+        caps.avisos && d.canales.telegramAvisos],
       ['respuesta', 620, 220, 170, '💬', 'Respuesta', 'al cliente por WhatsApp', true],
       ['reporte', 850, 220, 115, '📊', 'Reporte',
         !caps.reporte ? 'apagado' : (d.reporteCorreo ? String(d.reporteVia||'correo')+' ON' : 'sin conectar'),
@@ -253,7 +255,7 @@ SECCIONES.flujo = {
         datos: dato('Pases a humano / 30 días', c.escalacion||0) + dato('Pausa al escalar', d.minutosPausa + ' min'),
         p: 'Si piden una persona o hay queja: aviso urgente y el agente se calla en ese chat para que entres tú. La pausa se ajusta en Configuración.' },
       telegram: {
-        t: '📨 Telegram',
+        t: '📨 Telegram', sw: d.canales.telegramAvisos ? 'avisos' : null, on: caps.avisos,
         datos: dato('Estado', d.canales.telegramAvisos ? 'Conectado' : 'Sin conectar'),
         p: d.canales.telegramAvisos
           ? 'Cada aviso guarda el message_id que devuelve Telegram: sin id, cuenta como NO entregado.'
