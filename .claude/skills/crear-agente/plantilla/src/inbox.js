@@ -3,7 +3,8 @@
 import { responder } from "./zernio.js";
 import { negocio } from "../negocio.js";
 import { viaDelReporte } from "./reporte.js";
-import { pensar, separarDatos } from "./cerebro.js";
+import { separarDatos } from "./cerebro.js";
+import { razonar } from "./agente.js";
 import { composioListo } from "./composio.js";
 import {
   listarConversaciones, hiloCompleto, cambiarPausa, guardarMensaje, cambiarCierre,
@@ -191,11 +192,14 @@ export async function apiInbox(request, env, url) {
     }
     const t0 = Date.now();
     const fragmentos = await buscarFragmentos(env, texto, 4);
-    const cruda = await pensar(env, [{ role: "user", content: String(texto).slice(0, 1000) }],
-      { tipo: "prueba", fragmentos });
-    const { visible, datos } = separarDatos(cruda);
+    // Mismo camino que una conversación de verdad: si el agente pide una
+    // herramienta, aquí se ejecuta igual. Un probador que se salta el loop
+    // enseñaría algo que no va a pasar.
+    const { crudo, herramientas } = await razonar(
+      env, [{ role: "user", content: String(texto).slice(0, 1000) }], { usuario: "prueba" });
+    const { visible, datos } = separarDatos(crudo);
     return Response.json({
-      ok: true, respuesta: visible, datos, ms: Date.now() - t0,
+      ok: true, respuesta: visible, datos, herramientas, ms: Date.now() - t0,
       fragmentos: fragmentos.map((f) => ({ titulo: f.titulo, score: f.score, texto: f.texto.slice(0, 300) })),
     });
   }

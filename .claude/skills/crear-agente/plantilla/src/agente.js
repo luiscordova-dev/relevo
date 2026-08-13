@@ -53,31 +53,10 @@ export async function atender(env, { mensaje, conversacion: conv }) {
   // 4. Pensar con el historial. Si el agente tiene herramientas conectadas, aquí
   //    puede pedir una, ver el resultado y recién entonces contestar.
   const previos = await historial(env, conv.id);
-  let crudo = await pensar(env, previos, { conversacionId: conv.id });
-
-  if (hayHerramientas(env)) {
-    const conversacionInterna = [...previos];
-    for (let vuelta = 0; vuelta < MAX_VUELTAS; vuelta++) {
-      const pedido = pedidoDeHerramienta(crudo);
-      if (!pedido) break;
-
-      const resultado = await ejecutar(env, pedido, telefono);
-      await registrarEvento(env, "herramienta", {
-        id: pedido.id, ok: resultado.ok, error: resultado.error,
-      });
-      paso.herramientas = [...(paso.herramientas || []), { id: pedido.id, ok: resultado.ok }];
-
-      conversacionInterna.push({ role: "assistant", content: crudo });
-      conversacionInterna.push(resultadoParaElCerebro(pedido.id, resultado));
-      crudo = await pensar(env, conversacionInterna, { conversacionId: conv.id });
-    }
-    // Si tras las vueltas permitidas sigue pidiendo herramientas, se corta:
-    // el cliente lleva demasiado esperando y prefiere una respuesta honesta.
-    if (pedidoDeHerramienta(crudo)) {
-      await registrarEvento(env, "error", "El cerebro se quedó pidiendo herramientas en ciclo");
-      crudo = "Déjame confirmarlo con el equipo y te digo en un momento. ¿Me pasas tu nombre?";
-    }
-  }
+  const { crudo, herramientas } = await razonar(env, previos, {
+    conversacionId: conv.id, usuario: telefono,
+  });
+  if (herramientas.length) paso.herramientas = herramientas;
 
   const { visible, datos } = separarDatos(crudo);
 
@@ -174,3 +153,39 @@ async function escalar(env, { conversacionId, telefono, nombre, motivo, ultimoMe
 }
 
 export { MINUTOS_PAUSA, negocio };
+
+/**
+ * Pensar, y si el agente pide una herramienta: ejecutarla, devolverle el resultado
+ * y dejarlo contestar con eso. Es el comportamiento del agente en un solo lugar —
+ * lo usan tanto las conversaciones reales como el probador del panel, para que
+ * probar signifique de verdad lo que va a pasar.
+ */
+export async function razonar(env, mensajes, { conversacionId, usuario } = {}) {
+  let crudo = await pensar(env, mensajes, { conversacionId });
+  const herramientas = [];
+  if (!hayHerramientas(env)) return { crudo, herramientas };
+
+  const interna = [...mensajes];
+  for (let vuelta = 0; vuelta < MAX_VUELTAS; vuelta++) {
+    const pedido = pedidoDeHerramienta(crudo);
+    if (!pedido) break;
+
+    const resultado = await ejecutar(env, pedido, usuario);
+    await registrarEvento(env, "herramienta", {
+      id: pedido.id, ok: resultado.ok, error: resultado.error,
+    });
+    herramientas.push({ id: pedido.id, ok: resultado.ok, error: resultado.error });
+
+    interna.push({ role: "assistant", content: crudo });
+    interna.push(resultadoParaElCerebro(pedido.id, resultado));
+    crudo = await pensar(env, interna, { conversacionId });
+  }
+
+  // Si tras las vueltas permitidas sigue pidiendo herramientas, se corta: el
+  // cliente lleva demasiado esperando y prefiere una respuesta honesta.
+  if (pedidoDeHerramienta(crudo)) {
+    await registrarEvento(env, "error", "El cerebro se quedó pidiendo herramientas en ciclo");
+    crudo = "Déjame confirmarlo con el equipo y te digo en un momento. ¿Me pasas tu nombre?";
+  }
+  return { crudo, herramientas };
+}

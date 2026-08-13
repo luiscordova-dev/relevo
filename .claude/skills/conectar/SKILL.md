@@ -43,14 +43,40 @@ echo -n "<llave>" | npx wrangler secret put COMPOSIO_API_KEY
 **2. Conectar la app** (una vez por app). La conexión se autoriza en el navegador; la
 inicia el endpoint de connected accounts de Composio o el dashboard mismo. Guíalo a
 conectar la app que necesita para SU objetivo — no un tour por el catálogo. Verifica que
-quedó: `GET /api/v3/connected_accounts` debe listar la app con status activo.
+quedó:
+```bash
+curl -s "https://backend.composio.dev/api/v3/connected_accounts" -H "x-api-key: <llave>"
+```
+Cada cuenta debe salir con `"status": "ACTIVE"`. Una `EXPIRED` hay que reconectarla.
 
-**3. Elegir las tools.** Búscalas con `composio search "<caso de uso>"` (o el endpoint de
-tools). Para citas, el patrón de dos herramientas es el bueno:
+**2.5. El `user_id`: la trampa que cuesta horas.** Composio usa `user_id` como **filtro**.
+Si mandas uno que no existe, la llamada no falla con un error claro — simplemente no
+encuentra ninguna cuenta y TODAS las herramientas se caen con "no connected account". Y el
+valor correcto **no es adivinable**: en una cuenta real puede ser algo como
+`pg-test-830b58f5-…`, no `default`.
+
+El agente ya lo resuelve solo: `src/composio.js` pregunta bajo qué usuario viven las
+conexiones activas y lo guarda en `ajustes`. **No pongas `COMPOSIO_USER_ID` a mano** a menos
+que sepas el valor exacto: un valor equivocado gana sobre el auto-descubrimiento y deja al
+agente con cero integraciones.
+
+**3. Elegir las tools.** Búscalas con `composio search "<caso de uso>"`.
+Para citas, el patrón de dos herramientas es el bueno:
 - `GOOGLECALENDAR_FIND_FREE_SLOTS` → ver huecos ANTES de ofrecer
 - `GOOGLECALENDAR_CREATE_EVENT` → apartar cuando el cliente ya eligió
-Pitfalls conocidos de calendario: datetimes ISO **con timezone**; `event_duration_minutes`
-solo hasta 59 (usa horas para 1h+); el id del evento viene anidado en `response_data`.
+
+**3.5. LEE EL ESQUEMA REAL antes de escribir la herramienta. Siempre.**
+```bash
+composio execute GOOGLECALENDAR_CREATE_EVENT --get-schema
+```
+Suena a paso opcional y no lo es: adivinar los parámetros falló dos veces seguidas en la
+construcción de este kit, y cada fallo cuesta un despliegue y una prueba. Reales, ambos:
+
+| Lo que parecía razonable | Lo que pide de verdad |
+|---|---|
+| `event_duration_hour: 1.5` | **Entero**. Para 1h30 usa `end_datetime`, que es más simple |
+| `items: [{ id: "primary" }]` en FIND_FREE_SLOTS | Array de **strings**: `items: ["primary"]` |
+| Nada sobre videollamadas | `create_meeting_room` viene en **true**: crea un Google Meet en cada cita. Para un negocio presencial, ponlo en `false` |
 
 **4. Escribirlas en `negocio.js`** con `para` bien específico (eso es lo que lee el
 cerebro para decidir cuándo usarla) y `datos` con lo que debe pedirle al cliente:
@@ -58,22 +84,37 @@ cerebro para decidir cuándo usarla) y `datos` con lo que debe pedirle al client
 herramientas: [
   { id: "ver_huecos", tool: "GOOGLECALENDAR_FIND_FREE_SLOTS",
     para: "revisar qué horarios hay libres ANTES de ofrecer una cita",
-    datos: "el día que pide el cliente",
-    fijos: { calendar_id: "primary" } },
+    datos: "time_min y time_max en ISO 8601 del día que pide el cliente",
+    fijos: { timezone: "America/Mexico_City", items: ["primary"] } },
   { id: "agendar", tool: "GOOGLECALENDAR_CREATE_EVENT",
     para: "apartar la cita SOLO cuando el cliente ya eligió día y hora",
-    datos: "nombre del cliente, día y hora exacta",
-    fijos: { calendar_id: "primary" } },
+    datos: "summary (nombre y servicio), start_datetime y end_datetime en ISO 8601 sin zona",
+    fijos: { calendar_id: "primary", timezone: "America/Mexico_City",
+             create_meeting_room: false } },
 ],
 ```
+
+**4.5. Revisa que ninguna regla del prompt le prohíba lo que ahora SÍ puede hacer.**
+El prompt base dice "no puedes agendar citas ni cobrar" — y esa regla le gana a las
+herramientas: el agente las tiene conectadas y aun así toma datos en vez de usarlas.
+`cerebro.js` ya la hace condicional a que existan herramientas, pero si escribiste reglas
+en `reglasExtra` del estilo "nunca prometas una cita", quítalas o acótalas. Esto ya mordió
+antes con el anti-invento, y vuelve a morder con cada capacidad nueva.
 
 **5. Probar de verdad — el paso que no se salta:**
 1. Publica y espera 20 s.
 2. Por el webhook de prueba, actúa de cliente: *"¿tienen hueco el jueves en la tarde?"* →
    el agente debe consultar ANTES de contestar (revisa `eventos` tipo `herramienta`).
 3. *"va, agéndame el jueves a las 5, soy <nombre>"* → **abre el calendario real y enseña
-   el evento.** Eso es estar conectado; lo demás es esperanza.
-4. Borra el evento de prueba y corre la autoprueba completa (8/8).
+   el evento.** Eso es estar conectado; lo demás es esperanza. Confírmalo desde fuera:
+   `composio execute GOOGLECALENDAR_FIND_EVENT -d '{"query":"<nombre>","calendar_id":"primary"}'`
+   y enseña el id, el título y la hora que devuelve.
+4. Borra el evento de prueba (`GOOGLECALENDAR_DELETE_EVENT`) y corre la autoprueba completa.
+
+**Atajo para probar sin gastar WhatsApp:** el panel trae un probador
+(`POST /api/probar` con `{"texto":"…"}`) que corre el MISMO loop que una conversación real
+y devuelve qué herramientas usó y si salieron bien. Úsalo para iterar; deja el webhook
+para la prueba final.
 
 **Si la herramienta falla**, el agente ya está diseñado para degradar con gracia (dice que
 lo confirma el equipo y captura los datos) — pero tú diagnostica: `eventos` tipo
