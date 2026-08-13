@@ -26,8 +26,10 @@ que corra comandos: tú los corres.
 producción"* → **`/crear-agente`, Fase 9**. Los comandos verificados y los precios están
 en `crear-agente/referencias/zernio.md` → *Número propio (producción)*.
 **NO es `/conectar`** (esa es del playground: Composio y otros canales). Dos cosas que se
-dicen antes de que gaste: **no hay coexistencia** — el número se muda a Cloud API y deja
-la app del celular — y **la compra la autoriza y la corre la persona**, nunca tú.
+dicen antes de que gaste: **por esta ruta no hay coexistencia** — el número se muda a
+Cloud API y deja la app del celular (coexistencia sí existe, pero por otra plataforma como
+ManyChat; no la prometas desde el kit) — y **la compra la autoriza y la corre la persona**,
+nunca tú.
 
 ## Los docs para el usuario final (`docs/`)
 `docs/como-funciona.md` (arquitectura) · `docs/personalizar.md` (qué pedirle a Claude) ·

@@ -84,11 +84,17 @@ devuelve `data.messageId`. Fuera de la ventana de 24 h WhatsApp rechaza el enví
 > clientes reales: solo habla con el teléfono que lo activó. Para que cualquiera le
 > escriba hace falta un número propio.
 
-## ⚠️ Lo primero que hay que decirle a la persona: NO hay coexistencia
+## ⚠️ Lo primero que hay que decirle a la persona: por ESTA ruta no hay coexistencia
 
-Un número en Cloud API **deja de vivir en la app de WhatsApp Business del celular**. No se
-puede tener el mismo número contestando en la app y en la API a la vez — Zernio no expone
-coexistencia (no hay comandos de `coexist`/`migrate`/`import` en el CLI).
+Un número que se muda a Cloud API por Zernio **deja de vivir en la app de WhatsApp Business
+del celular**. Verificado: el CLI de Zernio no expone coexistencia (no hay comandos
+`coexist`/`migrate`/`import`).
+
+**Ojo con cómo lo dices:** la limitación es *de esta ruta*, no del mundo. Meta sí permite
+coexistencia y hay plataformas que la exponen — ManyChat, por ejemplo, la tiene funcionando
+(Luis la opera en producción en otro proyecto). Lo que no puedes decir es que Relevo la
+resuelve: el kit va por Zernio. Si la persona necesita el número en los dos lados, dile la
+verdad completa — se puede, pero por otra plataforma y fuera de este camino.
 
 Consecuencias que hay que decir **antes** de que compre nada:
 - Si el negocio ya atiende a diario desde la app de WhatsApp Business con ese número,
@@ -96,8 +102,9 @@ Consecuencias que hay que decir **antes** de que compre nada:
   celular** para ese número.
 - Por eso lo sano casi siempre es **un número nuevo** para el agente, y dejar el de
   siempre intacto en el teléfono.
-- Si de verdad necesita coexistencia (mismo número en app + API), eso es otra plataforma;
-  no lo prometas desde aquí.
+- Si de verdad necesita coexistencia (mismo número en app + API), existe, pero por otra
+  plataforma (ManyChat es la ruta conocida que funciona). No la prometas desde aquí: el
+  kit no la implementa.
 
 ## Camino A · Comprar el número en Zernio (lo normal)
 

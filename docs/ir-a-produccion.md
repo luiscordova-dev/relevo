@@ -34,8 +34,10 @@ celular**. Tu panel pasa a ser tu celular para ese número.
 > siempre intacto en tu teléfono. Así el agente atiende lo que llega de tu Instagram, tu
 > página y tus anuncios, y tú sigues con tus clientes de siempre como siempre.
 
-Si de verdad necesitas el mismo número en los dos lados a la vez, eso se llama
-*coexistencia* y no se hace desde aquí: es otro tipo de plataforma.
+Si de verdad necesitas el mismo número en los dos lados a la vez —contestando en tu
+celular Y automatizado— eso se llama *coexistencia*. **Sí existe**, pero no por este
+camino: hay plataformas que la exponen (ManyChat es la más conocida). Este kit conecta
+por Zernio, y por ahí el número se muda. Saberlo antes te ahorra la sorpresa.
 
 ### 2. Sí cuesta, y el costo no es del kit
 

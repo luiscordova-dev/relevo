@@ -253,10 +253,12 @@ Comandos verificados y la tabla de precios: `referencias/zernio.md` → *Número
 
 **Antes de tocar nada, dile las dos cosas que le van a doler si las descubre después:**
 
-1. **No hay coexistencia.** Un número en Cloud API deja de vivir en la app de WhatsApp
-   Business del celular. Si el negocio ya atiende a diario con ese número, migrarlo
-   significa dejar de contestar desde el teléfono: el panel pasa a ser su celular.
-   Casi siempre lo sano es **un número nuevo** para el agente.
+1. **Por esta ruta no hay coexistencia.** Un número que se muda a Cloud API por Zernio
+   deja de vivir en la app de WhatsApp Business del celular. Si el negocio ya atiende a
+   diario con ese número, migrarlo significa dejar de contestar desde el teléfono: el
+   panel pasa a ser su celular. Casi siempre lo sano es **un número nuevo** para el agente.
+   Si pregunta si se puede tener las dos cosas: **sí se puede, pero no aquí** — hay
+   plataformas que exponen coexistencia (ManyChat). No la prometas desde el kit.
 2. **Cuesta dinero, y no es del kit.** Es la renta mensual del número (de $3 a $21 USD
    según el país) más lo que WhatsApp cobra por conversación. Enséñale el precio de su
    país con `list-whats-app-number-countries` antes de que decida.
