@@ -14,7 +14,7 @@ const TONOS = {
   divertido: "Relajado y con chispa, de tú. Emojis bienvenidos, sin pasarse.",
 };
 
-export function construirSystemPrompt(env, fragmentos = []) {
+export function construirSystemPrompt(env, fragmentos = [], nombrePerfil = null) {
   const reglasExtra = (negocio.reglasExtra || []).map((r) => `- ${r}`).join("\n");
 
   // Cuando la información del negocio ya no cabe cómoda Y el índice la recuperó,
@@ -55,6 +55,11 @@ ${reglasExtra}
 ## TU META
 Que la persona se sienta atendida y, cuando muestre interés real, conseguir dos cosas:
 su NOMBRE y QUÉ QUIERE. Pídelos de forma natural, nunca como interrogatorio.
+${nombrePerfil ? `
+En WhatsApp esta persona aparece como "${nombrePerfil}". Puedes saludarla por ese nombre
+con naturalidad — pero NO des por hecho que es su nombre real: mucha gente pone ahí un
+apodo o el nombre de su negocio. Si vas a mandar el bloque de datos, confírmalo primero
+("¿te digo ${nombrePerfil}, o prefieres otro?") o espera a que ella lo escriba.` : ""}
 
 ## EJEMPLOS DE CÓMO CONTESTAS
 Estos son ejemplos de otro negocio. Copia el ESTILO y el uso del bloque de datos,
@@ -144,7 +149,7 @@ export async function pensar(env, mensajes, contexto = {}) {
     ?? await buscarFragmentos(env, ultimaPreguntaDelCliente(mensajes));
 
   const conSistema = [
-    { role: "system", content: construirSystemPrompt(env, fragmentos) },
+    { role: "system", content: construirSystemPrompt(env, fragmentos, contexto.nombrePerfil) },
     ...mensajes,
   ];
   const t0 = Date.now();

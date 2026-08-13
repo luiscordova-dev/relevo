@@ -113,3 +113,19 @@ recomienda el cambio. Claude lo aplica sin que tú tengas que entender nada.
 | `POST /calidad?clave=` | El control de calidad del cerebro |
 | `GET /salud` | Qué está configurado y qué falta |
 | cron 3:00 am | El resumen diario por correo, si lo activaste |
+
+
+## Por qué D1 y no R2 (ni KV)
+
+Son cosas distintas, no alternativas:
+
+| | Qué es | Rol en Relevo |
+|---|---|---|
+| **D1** | SQLite gestionado, relacional, con SQL | **Todo el estado**: conversaciones, mensajes, leads, eventos, uso, ajustes, documentos. Se consulta con `WHERE`/`JOIN`/`GROUP BY`, que es exactamente lo que el panel necesita |
+| **R2** | Object storage (S3-compatible) | **No se usa hoy**. Su caso sería archivar los audios e imágenes originales de los clientes; hoy se procesan al vuelo (Whisper/Vision) y se guarda el texto, que es lo que el cerebro necesita |
+| **KV** | Clave-valor, lectura eventual | Tampoco. Su consistencia eventual es mala para "¿esta conversación está pausada AHORA?" |
+| **Vectorize** | Índice vectorial | El Conocimiento (RAG), cuando se enciende |
+
+Resumen: el estado es relacional y se consulta por atributos, así que va en D1. R2 entra el
+día que se quieran guardar los medios originales (por ejemplo, para reprocesarlos con otro
+modelo) — es aditivo, no un reemplazo.

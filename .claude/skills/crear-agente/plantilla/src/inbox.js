@@ -29,6 +29,7 @@ const AJUSTES_PERMITIDOS = new Set([
   "horas_pausa_al_contestar",   // cuánto se calla el agente al contestar tú
   "minutos_pausa_escalacion",   // cuánto se calla al escalar
   "tope_mensual_neurons",       // presupuesto: al llegar, baja al modelo suplente
+  "segundos_buffer",            // cuánto espera antes de contestar (agrupa mensajes seguidos)
   "zona_horaria",
   "moneda",
   // Los switches de Capacidades. Sin valor = encendida; "0" = apagada.
@@ -177,6 +178,7 @@ export async function apiInbox(request, env, url) {
       reporteVia: viaDelReporte(env).via,
       reporteMotivo: viaDelReporte(env).motivo,
       minutosPausa: Number(ajustes.minutos_pausa_escalacion) || 60,
+      segundosBuffer: ajustes.segundos_buffer ?? 20,
       horasPausaContestar: Number(ajustes.horas_pausa_al_contestar) || HORAS_PAUSA_AL_CONTESTAR,
     });
   }

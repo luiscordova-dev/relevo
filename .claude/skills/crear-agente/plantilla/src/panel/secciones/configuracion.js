@@ -21,6 +21,19 @@ export const HTML = `
   </div>
 
   <div class="caja">
+    <div class="caja-cab"><h3>Antes de contestar</h3></div>
+    <div class="caja-cuerpo">
+      <p class="cf-p">La gente escribe en ráfaga: "hola" · "oye" · "cuánto cuesta X".
+      El agente espera un poco y los junta en una sola respuesta, en vez de contestar
+      tres veces descoordinado.</p>
+      <div class="cf-opciones" data-clave="segundos_buffer">
+        <button data-v="0">Sin espera</button><button data-v="10">10 s</button>
+        <button data-v="20">20 s</button><button data-v="40">40 s</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="caja">
     <div class="caja-cab"><h3>Cuando alguien pide un humano</h3></div>
     <div class="caja-cuerpo">
       <p class="cf-p">El agente te avisa 🔴 y se calla en ese chat mientras llegas.</p>
@@ -32,18 +45,19 @@ export const HTML = `
   </div>
 
   <div class="caja">
-    <div class="caja-cab"><h3>Conexiones</h3>
-      <span class="mini">el estado real de cada pieza — los interruptores aplican al momento</span></div>
-    <div class="caja-cuerpo" id="cfConexiones"></div>
+    <div class="caja-cab"><h3>Canales y avisos</h3>
+      <span class="mini">las piezas fijas — los interruptores aplican al momento</span></div>
+    <div class="caja-cuerpo" id="cfPiezas"></div>
   </div>
 
   <div class="caja">
-    <div class="caja-cab"><h3>Disponibles para conectar</h3>
-      <span class="mini">cada una es una conversación con Claude — el botón te da el prompt</span></div>
+    <div class="caja-cab"><h3>Apps de tu agente</h3>
+      <span class="mini">lo que puede usar para HACER cosas</span>
+      <span class="der" id="cfAppsMaster"></span></div>
     <div class="caja-cuerpo">
       <div class="cf-catalogo" id="cfCatalogo"></div>
-      <p class="cf-mas">…y 1,000+ apps más vía Composio. Si usas otra cosa (tu CRM, tu ERP),
-      pídesela a Claude con /conectar: si Composio la tiene, tu agente la puede usar.</p>
+      <p class="cf-mas">…y 1,000+ más vía Composio (tu CRM, tu ERP): pídesela a Claude con
+      /conectar y queda probada.</p>
     </div>
   </div>
 
@@ -66,23 +80,29 @@ export const CSS = `
   cursor:pointer;transition:.14s}
 .cf-opciones button:hover{border-color:var(--morado);color:var(--morado)}
 .cf-opciones button.on{background:var(--morado);color:#fff;border-color:var(--morado)}
-.cf-linea{display:flex;align-items:center;gap:10px;padding:9px 0;font-size:13.5px;
+.cf-linea{display:flex;align-items:center;gap:11px;padding:11px 0;font-size:13.5px;
   border-bottom:1px solid var(--borde)}
 .cf-linea:last-child{border-bottom:0}
-.cf-linea .estado{margin-left:auto;font-size:11px;font-weight:700;padding:3px 10px;
-  border-radius:99px}
-.cf-linea .estado.si{background:var(--morado-tenue);color:var(--morado)}
-.cf-linea .estado.no{background:var(--apagado);color:var(--sec)}
-.cf-linea .cf-conectar{margin-left:auto}
-.cf-linea .cf-conectar + .estado{margin-left:0}
+.cf-linea .ic{font-size:17px;flex:none;width:22px;text-align:center}
+.cf-linea .nom{flex:1;min-width:0}
+.cf-linea .nom b{display:block;font-size:13.5px;font-weight:600;letter-spacing:-.1px}
+.cf-linea .nom small{display:block;font-size:11.5px;color:var(--sec);margin-top:1px}
+.cf-linea .ctrl{display:flex;align-items:center;gap:10px;flex:none}
+.estado{font-size:10.5px;font-weight:700;letter-spacing:.04em;padding:3px 10px;
+  border-radius:99px;white-space:nowrap}
+.estado.si{background:var(--morado-tenue);color:var(--morado)}
+.estado.no{background:var(--apagado);color:var(--sec)}
 .cf-prompts{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
-.cf-catalogo{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
-.cf-app{display:flex;align-items:center;gap:10px;border:1px solid var(--borde);
+.cf-catalogo{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.cf-app{display:flex;align-items:center;gap:11px;border:1px solid var(--borde);
   border-radius:13px;padding:11px 13px}
-.cf-app .ic{font-size:17px}
-.cf-app b{font-size:12.5px;letter-spacing:-.1px;flex:1;min-width:0;overflow:hidden;
+.cf-app .ic{font-size:18px;flex:none}
+.cf-app .nom{flex:1;min-width:0}
+.cf-app .nom b{display:block;font-size:12.5px;letter-spacing:-.1px;overflow:hidden;
   text-overflow:ellipsis;white-space:nowrap}
-.cf-app .btn-sec{padding:6px 13px;font-size:11.5px;border-radius:9px}
+.cf-app .nom small{display:block;font-size:10.5px;color:var(--sec);margin-top:1px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cf-app .btn-sec{padding:6px 13px;font-size:11.5px;border-radius:9px;flex:none}
 .cf-mas{margin:12px 0 0;font-size:11.5px;color:var(--sec);line-height:1.6}
 `;
 
@@ -102,8 +122,10 @@ SECCIONES.configuracion = {
     };
     document.querySelectorAll('.cf-opciones').forEach(cont => {
       const clave = cont.dataset.clave;
-      const actual = aj.ajustes[clave] ||
-        (clave === 'horas_pausa_al_contestar' ? fl.horasPausaContestar : fl.minutosPausa);
+      const porDefecto = { horas_pausa_al_contestar: fl.horasPausaContestar,
+        minutos_pausa_escalacion: fl.minutosPausa, segundos_buffer: fl.segundosBuffer };
+      // ?? y no ||: "0" es un valor válido (sin espera), no un vacío.
+      const actual = aj.ajustes[clave] ?? porDefecto[clave];
       marcar(cont, actual);
       cont.querySelectorAll('button').forEach(b => b.onclick = async () => {
         await api('ajustes', { method:'POST', headers:{'Content-Type':'application/json'},
@@ -112,39 +134,42 @@ SECCIONES.configuracion = {
       });
     });
 
-    // Cada conexión: su estado real. Conectada y apagable → interruptor (aplica
-    // al momento). Sin conectar → botón que copia el prompt para Claude Code.
+    // ── Canales y avisos: las piezas fijas del agente ──────────────────────
+    // Una fila = un icono, su nombre con la explicación debajo, y UN control a
+    // la derecha (interruptor si se puede apagar, botón si falta conectar,
+    // etiqueta si no hay nada que hacer). Nunca los tres a la vez.
     const caps = fl.caps || {};
-    const linea = (ic, nombre, ok, siTxt, noTxt, prompt, sw, on) =>
-      '<div class="cf-linea"><span>' + ic + '</span><span>' + nombre + '</span>' +
-      (!ok && prompt
-        ? '<button class="btn-sec cf-conectar" data-p="' + esc(prompt) + '">Conectar</button>'
-        : '') +
-      (ok && sw
-        ? '<label class="sw" style="margin-left:auto" title="Encender o apagar">' +
-          '<input type="checkbox" data-cfsw="' + sw + '"' + (on ? ' checked' : '') + '><i></i></label>' +
-          '<span class="estado ' + (on ? 'si' : 'no') + '">' + (on ? siTxt : 'APAGADO') + '</span>'
-        : '<span class="estado ' + (ok ? 'si' : 'no') + '">' + (ok ? siTxt : noTxt) + '</span>') +
-      '</div>';
+    const fila = ({ ic, nombre, detalle, ok, sw, on, prompt, fijo }) => {
+      const ctrl = !ok && prompt
+        ? '<button class="btn-sec" data-p="' + esc(prompt) + '">Conectar</button>'
+        : (ok && sw
+          ? '<span class="estado ' + (on ? 'si' : 'no') + '">' + (on ? 'ACTIVO' : 'APAGADO') + '</span>' +
+            '<label class="sw" title="' + (on ? 'Apagar' : 'Encender') + '">' +
+            '<input type="checkbox" data-cfsw="' + sw + '"' + (on ? ' checked' : '') + '><i></i></label>'
+          : '<span class="estado ' + (ok ? 'si' : 'no') + '">' + (ok ? (fijo || 'CONECTADO') : 'SIN CONECTAR') + '</span>');
+      return '<div class="cf-linea"><span class="ic">' + ic + '</span>' +
+        '<span class="nom"><b>' + nombre + '</b><small>' + detalle + '</small></span>' +
+        '<span class="ctrl">' + ctrl + '</span></div>';
+    };
 
-    document.getElementById('cfConexiones').innerHTML =
-      linea('📱', 'WhatsApp', fl.canales.whatsapp, 'CONECTADO', 'SIN CONECTAR',
-        'Conecta WhatsApp a mi agente Relevo con Zernio: crea la llave, registra el webhook firmado y prueba con un mensaje real.') +
-      linea('📨', 'Avisos por Telegram', fl.canales.telegramAvisos, 'ACTIVOS', 'SIN CONECTAR',
-        'Configura los avisos de Telegram de mi agente Relevo: guíame con BotFather y prueba que llegue un aviso con su message_id.',
-        'avisos', caps.avisos) +
-      linea('🧰', 'Herramientas (Composio)', fl.composio,
-            fl.herramientas.length + ' DECLARADAS', 'SIN LLAVE',
-        'Usa /conectar para conectarle Composio a mi agente Relevo: mi API key del dashboard, la app que te diga, y pruébalo de punta a punta.',
-        'herramientas', caps.herramientas) +
-      linea('📊', 'Reporte diario por correo', fl.reporteCorreo,
-            'POR ' + String(fl.reporteVia || '').toUpperCase(), 'APAGADO',
-        'Enciende el reporte diario de mi agente Relevo por Gmail vía Composio (o Resend) y mándame uno de prueba con su id.',
-        'reporte', caps.reporte) +
-      linea('🧠', 'Cerebro', true, fl.cerebroPropio ? 'LLAVE PROPIA' : 'INCLUIDO', '');
+    document.getElementById('cfPiezas').innerHTML =
+      fila({ ic:'📱', nombre:'WhatsApp', ok: fl.canales.whatsapp, fijo:'CONECTADO',
+        detalle: fl.canales.whatsapp ? 'por donde te escriben tus clientes' : 'sin esto, el agente no puede contestar',
+        prompt:'Conecta WhatsApp a mi agente Relevo con Zernio: crea la llave, registra el webhook firmado y prueba con un mensaje real.' }) +
+      fila({ ic:'📨', nombre:'Avisos por Telegram', ok: fl.canales.telegramAvisos, sw:'avisos', on: caps.avisos,
+        detalle: caps.avisos ? 'te suena el teléfono cuando cae un interesado'
+                             : 'apagados: el interesado se guarda igual en el panel',
+        prompt:'Configura los avisos de Telegram de mi agente Relevo: guíame con BotFather y prueba que llegue un aviso con su message_id.' }) +
+      fila({ ic:'📊', nombre:'Reporte diario', ok: fl.reporteCorreo, sw:'reporte', on: caps.reporte,
+        detalle: fl.reporteCorreo
+          ? 'cada noche por ' + String(fl.reporteVia||'correo').toUpperCase() + ': el resumen del día'
+          : 'un resumen del día por correo, cada noche',
+        prompt:'Enciende el reporte diario de mi agente Relevo por Gmail vía Composio (o Resend) y mándame uno de prueba con su id.' }) +
+      fila({ ic:'🧠', nombre:'Cerebro', ok:true, fijo: fl.cerebroPropio ? 'LLAVE PROPIA' : 'INCLUIDO',
+        detalle: fl.cerebroPropio ? 'usando tu propia llave de ' + esc(fl.cerebroPropio)
+                                  : 'el modelo incluido en tu Cloudflare, sin llaves extra' });
 
-    // los interruptores de las conexiones
-    document.querySelectorAll('#cfConexiones [data-cfsw]').forEach(sw => sw.onchange = async () => {
+    document.querySelectorAll('#cfPiezas [data-cfsw]').forEach(sw => sw.onchange = async () => {
       sw.disabled = true;
       await post('ajustes', { ['cap_' + sw.dataset.cfsw]: sw.checked ? '1' : '0' });
       this.init();
@@ -152,24 +177,51 @@ SECCIONES.configuracion = {
       if (SECCIONES.capacidades?.datos) SECCIONES.capacidades.cada();
     });
 
-    // ── el catálogo: lo disponible, con su estado real y su prompt ──
+    // ── Apps: lo que el agente puede USAR. El encabezado dice si están
+    //    encendidas; cada tarjeta, si esa app en particular está conectada.
+    const maestro = document.getElementById('cfAppsMaster');
+    maestro.innerHTML = fl.composio
+      ? '<span class="estado ' + (caps.herramientas ? 'si' : 'no') + '">' +
+        (caps.herramientas ? (fl.herramientas.length + ' EN USO') : 'APAGADAS') + '</span>' +
+        '<label class="sw" style="margin-left:8px;vertical-align:middle" title="Apagar todas">' +
+        '<input type="checkbox" data-cfsw="herramientas"' + (caps.herramientas ? ' checked' : '') + '><i></i></label>'
+      : '<span class="estado no">SIN LLAVE DE COMPOSIO</span>';
+    maestro.querySelectorAll('[data-cfsw]').forEach(sw => sw.onchange = async () => {
+      sw.disabled = true;
+      await post('ajustes', { cap_herramientas: sw.checked ? '1' : '0' });
+      this.init();
+      if (SECCIONES.flujo?.datos) SECCIONES.flujo.cada();
+      if (SECCIONES.capacidades?.datos) SECCIONES.capacidades.cada();
+    });
+
     const slugs = (fl.herramientas || []).map(h => String(h.tool));
     const usa = (pref) => slugs.some(t => t.startsWith(pref));
+    // "vía": de dónde sale la conexión. Notion y Slack van directo (un token y
+    // ya); lo que pide OAuth con refresh va por Composio, que carga ese dolor.
     const apps = [
-      ['🗓️', 'Google Calendar', usa('GOOGLECALENDAR'), 'Usa /conectar: quiero que mi agente Relevo agende citas en mi Google Calendar, probado de punta a punta.'],
-      ['📝', 'Notion', usa('NOTION'), 'Usa /conectar: quiero que mi agente Relevo escriba los interesados en mi base de Notion, probado de punta a punta.'],
-      ['💬', 'Slack', usa('SLACK'), 'Usa /conectar: quiero que mi agente Relevo avise a mi canal de Slack cuando caiga un interesado, probado de punta a punta.'],
-      ['📊', 'Google Sheets', usa('GOOGLESHEETS'), 'Usa /conectar: quiero que mi agente Relevo registre cada interesado en mi hoja de Google Sheets, probado de punta a punta.'],
-      ['🧲', 'HubSpot', usa('HUBSPOT'), 'Usa /conectar: quiero que mi agente Relevo cree contactos/deals en mi HubSpot, probado de punta a punta.'],
-      ['💳', 'Stripe', usa('STRIPE'), 'Usa /conectar: quiero que mi agente Relevo genere links de pago de Stripe cuando el cliente quiera pagar, probado de punta a punta.'],
-      ['✈️', 'Canal: Telegram', false, 'Usa /conectar: quiero que mi agente Relevo también atienda por Telegram, probado con un mensaje real.'],
-      ['📸', 'Instagram / Messenger', false, 'Usa /conectar: quiero llevar mi agente Relevo a Instagram y Messenger (ruta ManyChat), probado de punta a punta.'],
+      ['🗓️','Google Calendar','agendar citas','Composio', usa('GOOGLECALENDAR'),
+       'Usa /conectar: quiero que mi agente Relevo agende citas en mi Google Calendar, probado de punta a punta.'],
+      ['📊','Google Sheets','registrar interesados','Composio', usa('GOOGLESHEETS'),
+       'Usa /conectar: quiero que mi agente Relevo registre cada interesado en mi hoja de Google Sheets, probado de punta a punta.'],
+      ['🧲','HubSpot','crear contactos y deals','Composio', usa('HUBSPOT'),
+       'Usa /conectar: quiero que mi agente Relevo cree contactos y deals en mi HubSpot, probado de punta a punta.'],
+      ['💳','Stripe','cobrar por WhatsApp','Composio', usa('STRIPE'),
+       'Usa /conectar: quiero que mi agente Relevo genere links de pago de Stripe, probado de punta a punta.'],
+      ['📝','Notion','guardar en tu base','directo', usa('NOTION') || slugs.some(t => t.includes('notion')),
+       'Usa /conectar: quiero que mi agente Relevo guarde los interesados en mi base de Notion. Va directo con mi token de Notion (sin Composio), como capacidad local, probado de punta a punta.'],
+      ['💬','Slack','avisar a tu canal','directo', usa('SLACK') || slugs.some(t => t.includes('slack')),
+       'Usa /conectar: quiero que mi agente Relevo avise a mi canal de Slack cuando caiga un interesado. Va directo con un webhook de Slack (sin Composio), probado de punta a punta.'],
+      ['✈️','Telegram como canal','que también atienda ahí','canal', false,
+       'Usa /conectar: quiero que mi agente Relevo también atienda por Telegram, probado con un mensaje real.'],
+      ['📸','Instagram y Messenger','atender tus DMs','canal', false,
+       'Usa /conectar: quiero llevar mi agente Relevo a Instagram y Messenger (ruta ManyChat), probado de punta a punta.'],
     ];
     document.getElementById('cfCatalogo').innerHTML = apps.map(a =>
-      '<div class="cf-app"><span class="ic">' + a[0] + '</span><b>' + a[1] + '</b>' +
-      (a[2]
-        ? '<span class="estado si">CONECTADA</span>'
-        : '<button class="btn-sec" data-p="' + esc(a[3]) + '">Conectar</button>') +
+      '<div class="cf-app"><span class="ic">' + a[0] + '</span>' +
+      '<span class="nom"><b>' + a[1] + '</b><small>' + a[2] + ' · ' + a[3] + '</small></span>' +
+      (a[4]
+        ? '<span class="estado si">EN USO</span>'
+        : '<button class="btn-sec" data-p="' + esc(a[5]) + '">Conectar</button>') +
       '</div>').join('');
 
     // Los prompts de ejemplo para cambiar el agente conversando

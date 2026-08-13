@@ -82,11 +82,21 @@ export async function guardarMensaje(env, { conversacionId, rol, texto, tipo, pl
       `INSERT INTO mensajes (conversacion_id, rol, texto, tipo, platform_message_id, creado_en)
        VALUES (?, ?, ?, ?, ?, ?)`
     ).bind(conversacionId, rol, texto, tipo || "texto", platformMessageId || null, ahora()).run();
-    return r.success;
+    // Devuelve el id (no un booleano): el buffer lo necesita para saber si este
+    // mensaje sigue siendo el último de la conversación cuando despierta.
+    return r.success ? (r.meta?.last_row_id ?? true) : false;
   } catch (e) {
     if (String(e).includes("UNIQUE")) return false; // ya lo habíamos procesado
     throw e;
   }
+}
+
+/** El id del último mensaje del cliente en esa conversación. Lo usa el buffer. */
+export async function ultimoMensajeCliente(env, conversacionId) {
+  const r = await env.DB.prepare(
+    `SELECT id FROM mensajes WHERE conversacion_id = ? AND rol = 'cliente'
+     ORDER BY id DESC LIMIT 1`).bind(conversacionId).first().catch(() => null);
+  return r?.id ?? null;
 }
 
 /** Historial reciente en el formato que espera el cerebro. */

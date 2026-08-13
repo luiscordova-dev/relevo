@@ -3,6 +3,19 @@
 Este repo construye agentes de WhatsApp con Claude Code. **Es público**: aquí no van
 llaves, cuentas, teléfonos ni datos de nadie.
 
+## ⚠️ A QUIÉN LE HABLAMOS — el filtro que define todo
+**Desarrolladores que trabajan con IA.** Gente que hace vibe coding, automatizaciones y
+agentes; que lee código y despliega en su propia nube. NO son dueños de negocio.
+
+Consecuencias directas, y no son opcionales:
+- **El lenguaje técnico se queda**: webhook firmado, HMAC, RAG, neurons, Vectorize,
+  idempotencia. Es lo que les da confianza — traducirlo a "lenguaje simple" les quita
+  información y suena a producto para principiantes.
+- Lo que sí se explica es el **porqué** y el **trade-off** (por qué HMAC en tiempo
+  constante, por qué RAG por umbral), no el qué.
+- **La única excepción**: `GUIA.md` y el panel del cliente final, que sí los ve el dueño
+  del negocio del técnico. Ahí manda el lenguaje llano.
+
 ## Si la persona acaba de llegar
 Su punto de entrada es la skill **`/crear-agente`**: entrevista sobre su negocio →
 genera el agente → lo despliega en SU Cloudflare → lo prueba con evidencia. No le pidas

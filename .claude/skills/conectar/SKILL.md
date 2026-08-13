@@ -30,6 +30,27 @@ el camino:
 > puede usar todas las apps que tú hayas conectado. Tiene plan gratis que alcanza de sobra
 > para empezar.
 
+## Antes de elegir camino: ¿directo o por Composio?
+
+No todo va por Composio. La regla que decide, app por app:
+
+| La app pide… | El camino | Por qué |
+|---|---|---|
+| **OAuth de Google/Meta** (Calendar, Gmail, Sheets, Drive, Instagram) | **Composio** | El refresh de tokens OAuth es el dolor que Composio existe para cargar |
+| **Un token simple** (Notion `ntn_…`, Slack bot/webhook) | **Directo** como capacidad `local:` — un secreto + `fetch` | Cero intermediarios, cero dependencia extra; son 20 líneas |
+| **Stripe** | **Composio** (decisión del kit) | Una sola llave (`COMPOSIO_API_KEY`) cubre pagos y lo demás |
+| CRMs con OAuth (HubSpot, Salesforce) | **Composio** | Mismo dolor de OAuth |
+| La API propia del negocio | **Directo** (`/agregar-capacidad`) | Es SU sistema; no necesita pasarela |
+
+Criterio para lo que no esté en la tabla: **¿la conexión pide OAuth con refresh?** →
+Composio. **¿Es un token que se pega una vez?** → directo, salvo que Composio YA esté
+conectado (entonces reúsalo: una llave menos que cuidar).
+
+Ejemplo del camino directo (Notion): `wrangler secret put NOTION_TOKEN` + una capacidad
+`local:guardar_en_notion` que hace `fetch` a `api.notion.com` con ese token. Se declara
+en `negocio.js` igual que cualquier herramienta, y se prueba igual: con evidencia (el id
+de la página creada).
+
 ## Camino A · Composio, de cero a probado
 
 **1. La cuenta y la llave.** composio.dev → registrarse → en el dashboard, crear una

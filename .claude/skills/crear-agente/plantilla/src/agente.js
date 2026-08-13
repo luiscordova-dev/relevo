@@ -11,10 +11,16 @@ import { avisarLead, avisarEscalacion } from "./avisos.js";
 import {
   obtenerConversacion, estaPausada, pausar, guardarMensaje, historial,
   guardarLead, leadDeConversacion, registrarEvento, nombreUtil, leerAjustes,
-  cargarAjustes, capacidadOn,
+  cargarAjustes, capacidadOn, ultimoMensajeCliente,
 } from "./datos.js";
 
 const MINUTOS_PAUSA = 60;   // el default; el panel puede cambiarlo sin redesplegar
+
+// Buffer: cuánto espera el agente antes de contestar, por si la persona sigue
+// escribiendo. La gente en WhatsApp manda "hola" / "oye" / "cuánto cuesta X" en
+// tres mensajes seguidos: sin esto, el agente contesta tres veces y descoordinado.
+// Ajustable desde el panel (Configuración → segundos_buffer). 0 lo apaga.
+const SEGUNDOS_BUFFER = 20;
 
 async function minutosPausa(env) {
   const ajustes = await leerAjustes(env);
@@ -30,7 +36,12 @@ export async function atender(env, { mensaje, conversacion: conv }) {
                  avisoId: null, herramientas: null };
 
   const telefono = conv.participantId || mensaje.sender?.phoneNumber || "";
-  const nombreWa = conv.participantName || mensaje.sender?.name || null;
+  // El nombre del perfil de WhatsApp: llega en el webhook y se guarda desde el
+  // primer mensaje. Sirve para saludar por su nombre sin preguntarlo — pero NO
+  // basta para dar por capturado al interesado: mucha gente tiene ahí un apodo,
+  // un emoji o el nombre de su negocio. Por eso el lead sigue exigiendo que la
+  // persona diga su nombre; este solo se usa como respaldo en el aviso.
+  const nombreWa = nombrePerfilUtil(conv.participantName || mensaje.sender?.name);
   const registro = await obtenerConversacion(env, conv.id, telefono, nombreWa);
 
   const ajustes = await cargarAjustes(env);
@@ -45,15 +56,33 @@ export async function atender(env, { mensaje, conversacion: conv }) {
   if (tipo !== "texto") paso.transcripcion = texto;
 
   // 2. Guardar. Si ya estaba, es un reintento de Zernio: no contestar dos veces.
-  const esNuevo = await guardarMensaje(env, {
+  const miId = await guardarMensaje(env, {
     conversacionId: conv.id, rol: "cliente", texto, tipo,
     platformMessageId: mensaje.platformMessageId || mensaje.id,
   });
-  if (!esNuevo) return { ...paso, omitido: "mensaje repetido (reintento)" };
+  if (!miId) return { ...paso, omitido: "mensaje repetido (reintento)" };
 
   // 3. Si el dueño tomó el control, el agente se queda callado.
   if (estaPausada(registro)) {
     return { ...paso, omitido: "el dueño está atendiendo este chat" };
+  }
+
+  // 3.5. BUFFER. Espera un poco por si la persona sigue escribiendo, y al
+  //      despertar comprueba quién quedó de último: si llegó otro mensaje, este
+  //      turno se retira y contesta el más reciente — que ya ve TODO el hilo en
+  //      su historial. Sin locks ni Durable Objects: el último gana.
+  const espera = Math.max(0, Math.min(90, Number(ajustes.segundos_buffer ?? SEGUNDOS_BUFFER)));
+  if (espera > 0 && typeof miId === "number") {
+    await new Promise((r) => setTimeout(r, espera * 1000));
+    const ultimo = await ultimoMensajeCliente(env, conv.id);
+    if (ultimo && ultimo !== miId) {
+      return { ...paso, omitido: `llegó otro mensaje durante el buffer (${espera}s); contesta ese` };
+    }
+    // Alguien pudo tomar el control mientras esperábamos.
+    const alDespertar = await obtenerConversacion(env, conv.id, telefono, nombreWa);
+    if (estaPausada(alDespertar)) {
+      return { ...paso, omitido: "el dueño tomó el chat durante el buffer" };
+    }
   }
 
   await marcarLeida(env, conv.id);
@@ -62,7 +91,7 @@ export async function atender(env, { mensaje, conversacion: conv }) {
   //    puede pedir una, ver el resultado y recién entonces contestar.
   const previos = await historial(env, conv.id);
   const { crudo, herramientas } = await razonar(env, previos, {
-    conversacionId: conv.id, usuario: telefono,
+    conversacionId: conv.id, usuario: telefono, nombrePerfil: nombreWa,
   });
   if (herramientas.length) paso.herramientas = herramientas;
 
@@ -168,9 +197,9 @@ export { MINUTOS_PAUSA, negocio };
  * lo usan tanto las conversaciones reales como el probador del panel, para que
  * probar signifique de verdad lo que va a pasar.
  */
-export async function razonar(env, mensajes, { conversacionId, usuario } = {}) {
+export async function razonar(env, mensajes, { conversacionId, usuario, nombrePerfil } = {}) {
   await cargarAjustes(env);
-  let crudo = await pensar(env, mensajes, { conversacionId });
+  let crudo = await pensar(env, mensajes, { conversacionId, nombrePerfil });
   const herramientas = [];
   if (!hayHerramientas(env)) return { crudo, herramientas };
 
@@ -187,7 +216,7 @@ export async function razonar(env, mensajes, { conversacionId, usuario } = {}) {
 
     interna.push({ role: "assistant", content: crudo });
     interna.push(resultadoParaElCerebro(pedido.id, resultado));
-    crudo = await pensar(env, interna, { conversacionId });
+    crudo = await pensar(env, interna, { conversacionId, nombrePerfil });
   }
 
   // Si tras las vueltas permitidas sigue pidiendo herramientas, se corta: el
@@ -217,7 +246,7 @@ export async function razonar(env, mensajes, { conversacionId, usuario } = {}) {
           "afirmes que ya quedó.",
       },
     ];
-    crudo = await pensar(env, correccion, { conversacionId });
+    crudo = await pensar(env, correccion, { conversacionId, nombrePerfil });
 
     const pedido = pedidoDeHerramienta(crudo);
     if (pedido) {
@@ -228,7 +257,7 @@ export async function razonar(env, mensajes, { conversacionId, usuario } = {}) {
       herramientas.push({ id: pedido.id, ok: resultado.ok, error: resultado.error });
       correccion.push({ role: "assistant", content: crudo });
       correccion.push(resultadoParaElCerebro(pedido.id, resultado));
-      crudo = await pensar(env, correccion, { conversacionId });
+      crudo = await pensar(env, correccion, { conversacionId, nombrePerfil });
     }
     // Segunda red: si aun así insiste en prometer, se cambia por algo honesto.
     if (prometeSinRespaldo(crudo, herramientas)) {
@@ -246,4 +275,17 @@ const PROMESAS = /\b(agendad[oa]|agend[ée]|apartad[oa]|apart[ée]|reservad[oa]|
 function prometeSinRespaldo(texto, herramientas) {
   if (!PROMESAS.test(String(texto || ""))) return false;
   return !herramientas.some((h) => h.ok);
+}
+
+/**
+ * El nombre del perfil de WhatsApp, si sirve de algo.
+ * Descarta lo que claramente no es un nombre: números, emojis solos, cadenas
+ * larguísimas, o el propio teléfono. Mejor no saludar por nombre que saludar mal.
+ */
+function nombrePerfilUtil(crudo) {
+  const n = String(crudo || "").trim();
+  if (!n || n.length > 40) return null;
+  if (/^\+?[\d\s()-]+$/.test(n)) return null;         // es un teléfono
+  if (!/\p{L}{2,}/u.test(n)) return null;              // sin letras: emojis o símbolos
+  return n;
 }

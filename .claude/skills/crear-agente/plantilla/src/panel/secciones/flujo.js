@@ -84,7 +84,7 @@ SECCIONES.flujo = {
     const kn = d.conocimiento || {};
     return [
       ['whatsapp', 20, 40, 190, '📱', 'WhatsApp', d.canales.whatsapp ? 'conectado' : 'sin conectar', d.canales.whatsapp],
-      ['webhook', 20, 130, 190, '🔏', 'Webhook firmado', 'HMAC verificado', true],
+      ['webhook', 20, 130, 190, '🔏', 'Webhook firmado', 'HMAC-SHA256 verificado', true],
       ['cerebro', 300, 82, 220, '🧠', 'Cerebro', (c.uso_cerebro||0)+' respuestas/30d', true],
       ['oido', 300, 300, 130, '🎙️', 'Oído', caps.oido ? (c.uso_oido||0)+' audios' : 'apagado', caps.oido],
       ['vista', 450, 300, 130, '👁️', 'Vista', caps.vista ? (c.uso_vista||0)+' fotos' : 'apagada', caps.vista],
@@ -208,8 +208,13 @@ SECCIONES.flujo = {
         prompt: d.canales.whatsapp ? null : 'Conecta WhatsApp a mi agente Relevo con Zernio: crea la llave, registra el webhook firmado y prueba con un mensaje real.' },
       webhook: {
         t: '🔏 Webhook firmado',
-        datos: dato('Firma', 'HMAC-SHA256') + dato('Comparación', 'tiempo constante') + dato('Reintentos', 'ignorados (idempotencia)'),
-        p: 'Cada entrega se verifica antes de tocar nada. Firma inválida → 401. Mensaje repetido → ignorado: nunca contesta dos veces.' },
+        datos: dato('Firma', 'HMAC-SHA256') + dato('Comparación', 'tiempo constante') +
+               dato('Filtro', 'por account.id') + dato('Idempotencia', 'platformMessageId'),
+        p: 'El endpoint es público, así que cada entrega se verifica antes de tocar nada: ' +
+           'firma inválida → 401. La comparación es en tiempo constante para no filtrar por ' +
+           'timing. Los webhooks de Zernio son <b>por cuenta, no por número</b>: sin el filtro ' +
+           'de account.id, dos agentes tuyos se contestarían entre ellos (pasó de verdad). Y el ' +
+           'platformMessageId hace la entrega idempotente: Zernio reintenta hasta 7 veces.' },
       cerebro: {
         t: '🧠 El cerebro',
         datos: dato('Modelo', esc(d.cerebroPropio ? ('llave propia · ' + d.cerebroPropio) : d.modelo.split('/').pop())) +

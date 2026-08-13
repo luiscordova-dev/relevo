@@ -55,7 +55,10 @@ claude
 contesta 24/7 con la información del negocio · entiende **notas de voz** (Whisper) y
 **fotos** (Llama Vision) · **no inventa** — si no sabe, lo dice y captura · captura leads
 y **avisa por Telegram al momento** · escala a humano cuando lo piden o hay queja (y se
-calla para que entres tú) · panel de operación con **inicio y cierre de sesión** (cookie
+calla para que entres tú) · **buffer de mensajes** configurable (la gente escribe en
+ráfaga; el agente agrupa y contesta una vez) · **memoria de conversación** (los últimos 12
+mensajes entran al prompt) · usa el **nombre del perfil de WhatsApp** para saludar, sin
+darlo por bueno como lead · panel de operación con **inicio y cierre de sesión** (cookie
 firmada, nada de claves en la URL), inbox, toma de control, etiquetas, recordatorios,
 notas privadas, y **capacidades que se encienden y apagan con un switch** — aplican al
 momento, sin republicar, y el flujo en vivo lo refleja.

@@ -4,6 +4,7 @@
 // adentro, en el panel. La clave se cambia por una cookie HMAC firmada (index.js).
 
 import { negocio } from "../../negocio.js";
+import { LOGO_SVG, FAVICON } from "./logo.js";
 
 const esc = (s) => String(s ?? "").replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" })[c]);
 
@@ -12,6 +13,7 @@ export function paginaLogin() {
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#131628">
 <title>${esc(negocio.nombreNegocio)} — entrar</title>
+<link rel="icon" href="${FAVICON}">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Poppins:wght@400;600;800&display=swap">
 <style>
@@ -32,8 +34,8 @@ body{
 .lado{flex:1.08;background:linear-gradient(160deg,#191c33,#10121f);color:var(--blanco);
   padding:38px 40px;display:flex;flex-direction:column}
 .marca{display:flex;align-items:center;gap:12px}
-.marca .cuadro{width:44px;height:44px;border-radius:13px;background:var(--morado);
-  display:grid;place-items:center;font-weight:800;font-size:19px;flex-shrink:0}
+.marca .cuadro{width:46px;height:46px;flex-shrink:0}
+.marca .cuadro svg{width:100%;height:100%;display:block}
 .marca b{display:block;font-size:15px;letter-spacing:-.2px}
 .marca span{font-size:11.5px;color:rgba(255,255,255,.55)}
 .lado h1{font-family:Fraunces,Georgia,serif;font-weight:600;font-size:37px;line-height:1.14;
@@ -87,7 +89,7 @@ label{display:block;font-size:12.5px;font-weight:600;margin-bottom:7px}
 <div class="caja">
   <div class="lado">
     <div class="marca">
-      <div class="cuadro">R</div>
+      <div class="cuadro">${LOGO_SVG}</div>
       <div><b>Relevo</b><span>agentes de WhatsApp con Claude Code</span></div>
     </div>
     <h1>El relevo que contesta<br>cuando tú no puedes.</h1>

@@ -13,6 +13,7 @@ import { marca } from "../../marca.js";
 const ATRIBUCION = `hecho con <a href="https://github.com/luiscordova-dev/relevo" target="_blank" rel="noopener">Relevo</a>
  · by <a href="https://instagram.com/luiscordova.ia" target="_blank" rel="noopener">Luis Córdova</a>`;
 import { CSS as BASE } from "./estilos.js";
+import { FAVICON } from "./logo.js";
 import { APP } from "./app.js";
 import * as resumen from "./secciones/resumen.js";
 import * as conversaciones from "./secciones/conversaciones.js";
@@ -61,6 +62,7 @@ export function renderPanel() {
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#131628">
 <title>${esc(negocio.nombreNegocio)}</title>
+<link rel="icon" href="${FAVICON}">
 ${marca.fuente ? `<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="${marca.fuente}">` : ""}
 <style>${BASE}
