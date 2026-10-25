@@ -39,9 +39,9 @@ README y GUIA: si cambias la ruta de producción, se actualizan los tres a la ve
 ## La frontera del kit (regla para TODA decisión de alcance)
 **¿Es parte de "primer agente vivo"? → completo, guiado y soportado (Paso 1).**
 **¿Es "operar un sistema de negocio" (citas, reportes, documentos, integraciones)? →
-playground avanzado (Paso 2): visible, sin guía, sin soporte.** El camino guiado de eso
-vive en la lista del workshop (https://tally.so/r/EkGZoL) — nunca prometas que "pronto
-será gratis" ni lo montes como ruta guiada desde el kit.
+playground avanzado (Paso 2): visible, sin guía, sin soporte.** No lo montes como ruta
+guiada desde el kit. Para seguir aprendiendo: el canal de YouTube
+(https://youtube.com/@luiscordova-ia); dudas o fallas: Issues del repo.
 
 ## Las skills del kit
 **Oficiales (Paso 1 — guiadas y soportadas):**

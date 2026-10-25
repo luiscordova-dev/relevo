@@ -8,7 +8,7 @@ El camino completo, en un vistazo:
 
 1. **👣 Paso 1 — Tu primer agente en 30 minutos** (guiado, soportado, obligatorio)
 2. **🧪 Paso 2 (opcional) — Juega con lo avanzado** (ejemplos sin soporte: léelos, rómpelos, haz forks)
-3. **🎓 Paso 3 — [Si quieres aprender a crear agentes de IA y automatizaciones con Claude Code en serio, anótate a la lista](https://tally.so/r/EkGZoL?origen=readme)**
+3. **🎓 Paso 3 — Seguir aprendiendo: más videos y guías en [mi canal de YouTube](https://youtube.com/@luiscordova-ia)**
 
 ---
 
@@ -93,14 +93,13 @@ plantilla:
 - 🧰 Las skills marcadas **avanzado · referencia sin soporte**: `/conectar`,
   `/cargar-conocimiento`, `/agregar-capacidad`, `/afinar`
 
-## 🎓 Paso 3 · Aprender el sistema
+## 🎓 Paso 3 · Seguir aprendiendo
 
-Si después de montar tu agente quieres aprender el método completo — cómo decidir
-arquitectura, evals, evitar inventos, cuándo usar RAG, cómo probar en producción —
-ese es justo el salto que sigue.
+Si después de montar tu agente quieres ir más a fondo — cómo decidir arquitectura,
+evals, evitar inventos, cuándo usar RAG, cómo probar en producción — hay más videos y
+guías en **[mi canal de YouTube →](https://youtube.com/@luiscordova-ia)**
 
-**[Si quieres aprender a crear agentes de IA y automatizaciones con Claude Code en
-serio, anótate a la lista →](https://tally.so/r/EkGZoL?origen=readme)**
+¿Dudas o algo falló? Ábrelo en [Issues](https://github.com/luiscordova-dev/relevo/issues).
 
 ---
 
@@ -129,6 +128,5 @@ que lo construye.
 ---
 
 📌 **PD — si te saltaste hasta acá:** arriba tienes el paso a paso para dejar un agente
-mínimo contestando solo, capturando interesados y avisándote. Y si quieres aprender a
-crear agentes de IA y automatizaciones con Claude Code en serio,
-**[anótate a la lista →](https://tally.so/r/EkGZoL?origen=readme)**
+mínimo contestando solo, capturando interesados y avisándote. Más videos y guías en
+**[mi canal de YouTube →](https://youtube.com/@luiscordova-ia)** · dudas o fallas en [Issues](https://github.com/luiscordova-dev/relevo/issues).

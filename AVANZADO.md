@@ -42,5 +42,5 @@ que factura.
 
 ---
 
-🎓 **Si quieres aprender a crear agentes de IA y automatizaciones con Claude Code en
-serio, [anótate a la lista →](https://tally.so/r/EkGZoL?origen=avanzado)**
+🎓 **Más videos y guías en [mi canal de YouTube →](https://youtube.com/@luiscordova-ia)** · dudas o fallas en
+[Issues](https://github.com/luiscordova-dev/relevo/issues).

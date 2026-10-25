@@ -3,7 +3,7 @@
 
 ## 1. Zernio sandbox — ✅ TODO CONFIRMADO
 
-Probado con el número real de Luis (+52 669 441 4164) contra el sandbox (+1 202 908 7457):
+Probado con un número real de WhatsApp contra el sandbox de Zernio:
 
 - **Sesión**: `zernio whatsappsandbox:create-whats-app-sandbox-session --phone "+52..."` →
   el usuario responde cualquier cosa al mensaje del sandbox → `active` (7 días).

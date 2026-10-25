@@ -210,14 +210,14 @@ Luego preséntale el camino, sin vender de más:
 > ejemplos reales de citas, conocimiento con documentos y reportes — sin soporte,
 > para que los leas, los rompas y hagas forks.
 >
-> Y si quieres aprender a crear agentes de IA y automatizaciones con Claude Code en
-> serio, anótate a la lista: https://tally.so/r/EkGZoL?origen=skill
+> Más videos y guías en mi canal de YouTube: https://youtube.com/@luiscordova-ia
+> Y si tienes dudas o algo falla, ábrelo en https://github.com/luiscordova-dev/relevo/issues
 
 **Lo que NO haces aquí:** no ofrezcas montarle citas, reportes ni integraciones como
 ruta guiada — esa ruta no es parte del kit. Si la persona lo pide explícitamente, dile
 la verdad: el código está en `src/avanzado/` como referencia, puedes ayudarle a
-explorarlo, pero sin la promesa de dejarlo en producción — la versión guiada con
-método y soporte vive en la lista de arriba. Las mejoras chicas (cambiar información,
+explorarlo, pero sin la promesa de dejarlo en producción — para dudas o fallas está
+Issues del repo. Las mejoras chicas (cambiar información,
 tono, una capacidad propia sencilla) sí se hacen normal, conversando.
 
 ## Cierre
