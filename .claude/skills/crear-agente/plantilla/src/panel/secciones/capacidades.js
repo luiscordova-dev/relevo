@@ -122,7 +122,7 @@ SECCIONES.capacidades = {
 
       const pie = c.prompt
         ? (c.lista
-            ? '<a class="cap-lista" href="https://tally.so/r/EkGZoL?origen=panel" target="_blank" rel="noopener">' +
+            ? '<a class="cap-lista" href="https://youtube.com/@luiscordova-ia" target="_blank" rel="noopener">' +
               '🎓 Aprende a montarlo en serio — anótate a la lista →</a>' +
               '<button class="cap-prompt" data-p="' + esc(c.prompt) + '">' +
               '<b>&gt;_ o explóralo por tu cuenta — copiar</b>' + esc(c.prompt) + '</button>'

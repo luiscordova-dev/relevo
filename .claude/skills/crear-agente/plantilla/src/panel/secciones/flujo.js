@@ -302,7 +302,7 @@ SECCIONES.flujo = {
     // la acción del pie, cuando falta conectar algo
     document.getElementById('fDetPie').innerHTML =
       (f.lista
-        ? '<a class="cap-lista" href="https://tally.so/r/EkGZoL?origen=panel" target="_blank" rel="noopener">' +
+        ? '<a class="cap-lista" href="https://youtube.com/@luiscordova-ia" target="_blank" rel="noopener">' +
           '🎓 Aprende a montarlo en serio — anótate a la lista →</a>'
         : '') +
       (f.prompt

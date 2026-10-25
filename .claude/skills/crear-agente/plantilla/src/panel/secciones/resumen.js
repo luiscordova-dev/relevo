@@ -23,7 +23,7 @@ export const HTML = `
       <a class="liga der" href="#/conversaciones">ver todas →</a></div>
     <div id="rRecientes"></div>
   </div>
-  <a class="r-lista" href="https://tally.so/r/EkGZoL?origen=panel" target="_blank" rel="noopener">
+  <a class="r-lista" href="https://youtube.com/@luiscordova-ia" target="_blank" rel="noopener">
     <span>🎓</span>
     <b>Si quieres aprender a crear agentes de IA y automatizaciones con Claude Code
     en serio, anótate a la lista</b>

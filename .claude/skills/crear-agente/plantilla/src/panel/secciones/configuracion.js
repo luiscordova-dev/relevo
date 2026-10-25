@@ -142,7 +142,7 @@ SECCIONES.configuracion = {
     const caps = fl.caps || {};
     const fila = ({ ic, nombre, detalle, ok, sw, on, prompt, fijo, lista }) => {
       const ctrl = !ok && lista
-        ? '<a class="btn-sec" href="https://tally.so/r/EkGZoL?origen=panel" target="_blank" rel="noopener">Conectar →</a>'
+        ? '<a class="btn-sec" href="https://youtube.com/@luiscordova-ia" target="_blank" rel="noopener">Conectar →</a>'
         : !ok && prompt
         ? '<button class="btn-sec" data-p="' + esc(prompt) + '">Conectar</button>'
         : (ok && sw
@@ -224,7 +224,7 @@ SECCIONES.configuracion = {
       '<span class="nom"><b>' + a[1] + '</b><small>' + a[2] + ' · ' + a[3] + '</small></span>' +
       (a[4]
         ? '<span class="estado si">EN USO</span>'
-        : '<a class="btn-sec" href="https://tally.so/r/EkGZoL?origen=panel" target="_blank" rel="noopener" ' +
+        : '<a class="btn-sec" href="https://youtube.com/@luiscordova-ia" target="_blank" rel="noopener" ' +
           'title="La ruta guiada vive en el workshop">Conectar →</a>') +
       '</div>').join('');
 
